@@ -1,6 +1,5 @@
 #include"server.h"
-
-HTTPServer::~HTTPServer() {
+TCPServer::~TCPServer() {
     if(server_fd != -1) {
         close(server_fd);
     }
@@ -9,13 +8,13 @@ HTTPServer::~HTTPServer() {
     }
 }
 
-void HTTPServer::start() {
+void TCPServer::start() {
     initSocket();
     initEpoll();
     eventLoop();
 }
 
-void HTTPServer::initSocket(){
+void TCPServer::initSocket(){
         server_fd = socket(AF_INET, SOCK_STREAM, 0);//TCP
         if(server_fd == -1) {
             std::cerr << "Failed to create socket" << std::endl;
@@ -42,7 +41,7 @@ void HTTPServer::initSocket(){
         std::cout<<"Server started at port "<<port<<std::endl;
 }
 
-void HTTPServer::initEpoll() {
+void TCPServer::initEpoll() {
     epoll_fd = epoll_create1(0);
     if(epoll_fd == -1) {
         std::cerr << "Failed to create epoll" << std::endl;
@@ -68,7 +67,7 @@ void HTTPServer::initEpoll() {
     events.resize(MAX_EVENTS);
 }
 
-void HTTPServer::eventLoop() {
+void TCPServer::eventLoop() {
     while(true) {
         int nfds = epoll_wait(epoll_fd,events.data(),MAX_EVENTS,-1);
         if(nfds == -1) {
@@ -87,7 +86,7 @@ void HTTPServer::eventLoop() {
     }
 }
 
-void HTTPServer::handleAccept(){
+void TCPServer::handleAccept(){
     sockaddr_in client_addr = {};
     socklen_t client_len = sizeof(client_addr);
     int client_fd = accept(server_fd,(sockaddr *)&client_addr,&client_len);
@@ -118,7 +117,7 @@ void HTTPServer::handleAccept(){
     }
 }
 
-void HTTPServer::handleClient(int fd){
+void TCPServer::handleClient(int fd){
     char *buffer = new char[1024];
     while(true){
         ssize_t bytes_read = recv(fd,buffer,1024,0);
@@ -136,16 +135,7 @@ void HTTPServer::handleClient(int fd){
             }
         } else {
             buffer[bytes_read] = '\0';
-            // std::cout<<buffer<<std::endl;
-            HTTPRequest req;
-            if(parseRequest(buffer,req) == -1) {
-                std::cerr << "Failed to parse request" << std::endl;
-            }
-            HTTPResponse res = handleRequest(req);
-            std::cout<<res.version<<" "<<res.status<<std::endl;
-            ResponseToBuffer(res,buffer);
-            send(fd,buffer,strlen(buffer),0);
-            close(fd);
+            handle->handle(buffer,fd);
         }
     }
     delete[] buffer;

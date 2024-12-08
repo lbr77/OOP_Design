@@ -7,17 +7,21 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <vector>
-#include"../http/http.h"
+#include"../http/struct.h"
 constexpr int MAX_EVENTS = 1000;
-constexpr int DEFAULT_PORT = 8080;
-
-class HTTPServer {
+constexpr int DEFAULT_PORT = 8081;
+class Handler {
 public:
-    HTTPServer(int port = DEFAULT_PORT):port(port),server_fd(-1),epoll_fd(-1) {}
-    ~HTTPServer();
+    virtual void handle(char *buffer,int fd) = 0;
+};
+class TCPServer {
+public:
+    TCPServer(int port = DEFAULT_PORT,Handler *handle=nullptr):port(port),server_fd(-1),epoll_fd(-1),handle(handle) {}
+    ~TCPServer();
     void start();
 private:
     int port,server_fd,epoll_fd;
+    Handler *handle;
     std::vector<epoll_event> events;
 
     void initSocket();

@@ -4,3 +4,4 @@ build/*
 CourseTest
 Makefile
 public/*
+_deps/*
