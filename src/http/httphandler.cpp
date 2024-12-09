@@ -26,23 +26,32 @@ int HTTPHandlers::bufferToRequest(char *buffer,HTTPRequest &req) {
     req.body = str;
     return 0;
 }
-int HTTPHandlers::responseToBuffer(HTTPResponse &res,char *buffer) {
+int HTTPHandlers::responseToBuffer(HTTPResponse &res,char * &buffer,int &buffer_len) {
+    if(res.status_code == "") {
+        res.status_code = "500";
+    }
+    res.status = status_code[res.status_code].get<std::string>();
     std::string res_str = res.version + " " + res.status + "\r\n";
+    std::cout<<res.version + " " + res.status <<std::endl;
+    res.headers["Content-Length"] = std::to_string(res.body.size());
     for(auto it = res.headers.begin();it != res.headers.end();it++){
         res_str += it.key() + ": " + it.value().get<std::string>() + "\r\n";
     }
     res_str += "\r\n" + res.body;
-    strcpy(buffer,res_str.c_str());
+    buffer = new char[res_str.size()+1];
+    memcpy(buffer,res_str.c_str(),res_str.size());
+    buffer_len = res_str.size();
     return 0;
 }
 void HTTPHandlers::handle(char *buffer,int fd) {
     HTTPRequest req;
     if(bufferToRequest(buffer,req) == -1) {
         HTTPResponse response;
-        char res_buffer[1024];
-        std::cout<<response.status<<std::endl;
-        responseToBuffer(response,res_buffer);
+        char *res_buffer = new char[1024];
+        strcpy(res_buffer,"HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/html\r\n\r\n500 Internal Server Error");
         send(fd,res_buffer,strlen(res_buffer),0);
+        delete[] res_buffer;
+        return;
     }
     HTTPResponse response;
     std::cout << req.method << " " << req.path << " " << req.version << std::endl;
@@ -56,10 +65,15 @@ void HTTPHandlers::handle(char *buffer,int fd) {
         }
     }
     if(!called)response = default_handler->handle(req);
-    char res_buffer[1024];
-    std::cout<<response.status<<std::endl;
-    responseToBuffer(response,res_buffer);
-    send(fd,res_buffer,strlen(res_buffer),0);
+    char *res_buffer = nullptr;
+    int buffer_len = 0;
+    if(responseToBuffer(response,res_buffer,buffer_len) == -1){
+        delete [] res_buffer;
+        res_buffer = new char[1024];
+        strcpy(res_buffer,"HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/html\r\n\r\n500 Internal Server Error");
+    }
+    send(fd,res_buffer,buffer_len,0);
+    delete[] res_buffer;
     close(fd);
 }
 

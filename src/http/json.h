@@ -8,7 +8,7 @@ class JsonHandler: public BaseHandler{
         res.headers["Content-Type"]="application/json";
         res.body="{\"status\":\"ok\"}";
         res.version = request.version;
-        res.status = "200 OK";
+        res.status_code = "200";
         return res;
     }
 

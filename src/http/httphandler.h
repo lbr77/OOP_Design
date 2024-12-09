@@ -24,6 +24,6 @@ private:
     map<string,BaseHandler*> handlers; // path -> handler
     BaseHandler *default_handler;
     int bufferToRequest(char *buffer,HTTPRequest &request);
-    int responseToBuffer(HTTPResponse &response,char *buffer);
+    int responseToBuffer(HTTPResponse &response,char* &buffer,int &buffer_len);
 };
 #endif

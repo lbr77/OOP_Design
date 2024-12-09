@@ -10,9 +10,9 @@ int main(int argc,char **argv) {
         port = atoi(argv[1]);
     }
     HTTPHandlers handlers;
-    handlers.add_handle("/api/wx",new WeixinHandler());
+    handlers.add_handle("/api/weixin",new WeixinHandler());
     handlers.add_handle("/api/qq",new QQHandler());
-    handlers.add_handle("/api/wb",new WeiboHandler());
+    handlers.add_handle("/api/weibo",new WeiboHandler());
     handlers.default_handle(new BaseHandler());
     TCPServer server(port,&handlers);
     server.start();
