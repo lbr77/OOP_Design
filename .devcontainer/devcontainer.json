@@ -4,6 +4,8 @@
 	"name": "C++",
 	"build": {
 		"dockerfile": "Dockerfile"
+	},
+	"features": {
 	}
 
 	// Features to add to the dev container. More info: https://containers.dev/features.

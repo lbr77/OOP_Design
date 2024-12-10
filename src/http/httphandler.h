@@ -17,13 +17,11 @@ public:
             delete it->second;
         }
     }
-    void handle(char *buffer,int fd);
+    void handle(const char *buffer,int fd);
     void add_handle(string path,BaseHandler *handler);
     void default_handle(BaseHandler *handler);
 private:
     map<string,BaseHandler*> handlers; // path -> handler
-    BaseHandler *default_handler;
-    int bufferToRequest(char *buffer,HTTPRequest &request);
-    int responseToBuffer(HTTPResponse &response,char* &buffer,int &buffer_len);
+    BaseHandler *default_handler; // default is file server.
 };
 #endif

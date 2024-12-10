@@ -1,4 +1,5 @@
 #include"server.h"
+#include"../utils/log.h"
 TCPServer::~TCPServer() {
     if(server_fd != -1) {
         close(server_fd);
@@ -17,7 +18,7 @@ void TCPServer::start() {
 void TCPServer::initSocket(){
         server_fd = socket(AF_INET, SOCK_STREAM, 0);//TCP
         if(server_fd == -1) {
-            std::cerr << "Failed to create socket" << std::endl;
+            LOG_ERROR("Failed to create socket");
             exit(1);
         }
         int opt = 1;
@@ -28,23 +29,26 @@ void TCPServer::initSocket(){
         server_addr.sin_addr.s_addr = INADDR_ANY;
 
         if(bind(server_fd,(sockaddr *)&server_addr,sizeof(server_addr)) == -1) {
-            std::cerr << "Failed to bind" << std::endl;
+            // std::cerr << "Failed to bind" << std::endl;
+            LOG_ERROR("Failed to bind");
             close(server_fd);
             exit(1);
         }
 
         if(listen(server_fd,10) == -1) {
-            std::cerr << "Failed to listen" << std::endl;
+            // std::cerr << "Failed to listen" << std::endl;
+            LOG_ERROR("Failed to listen");
             close(server_fd);
             exit(1);
         }
-        std::cout<<"Server started at port "<<port<<std::endl;
+        LOG_INFO("Server started on port " ,port);
 }
 
 void TCPServer::initEpoll() {
     epoll_fd = epoll_create1(0);
     if(epoll_fd == -1) {
-        std::cerr << "Failed to create epoll" << std::endl;
+        // std::cerr << "Failed to create epoll" << std::endl;
+        LOG_ERROR("Failed to create epoll");
         close(server_fd);
         exit(1);
     }
@@ -52,14 +56,16 @@ void TCPServer::initEpoll() {
     ev.events = EPOLLIN;
     ev.data.fd = server_fd;
     if(epoll_ctl(epoll_fd,EPOLL_CTL_ADD,server_fd,&ev) == -1) {
-        std::cerr << "Failed to add server fd to epoll" << std::endl;
+        // std::cerr << "Failed to add server fd to epoll" << std::endl;
+        LOG_ERROR("Failed to add server fd to epoll");
         close(server_fd);
         close(epoll_fd);
         exit(1);
     }
     int flags = fcntl(server_fd,F_GETFL,0);
     if(fcntl(server_fd,F_SETFL,flags | O_NONBLOCK) == -1) {
-        std::cerr << "Failed to set server fd to non-blocking" << std::endl;
+        // std::cerr << "Failed to set server fd to non-blocking" << std::endl;
+        LOG_ERROR("Failed to set server fd to non-blocking");
         close(server_fd);
         close(epoll_fd);
         exit(1);
@@ -71,7 +77,8 @@ void TCPServer::eventLoop() {
     while(true) {
         int nfds = epoll_wait(epoll_fd,events.data(),MAX_EVENTS,-1);
         if(nfds == -1) {
-            std::cerr << "Failed to epoll_wait" << std::endl;
+            // std::cerr << "Failed to epoll_wait" << std::endl;
+            LOG_ERROR("Failed to epoll_wait");
             close(server_fd);
             close(epoll_fd);
             exit(1);
@@ -91,17 +98,19 @@ void TCPServer::handleAccept(){
     socklen_t client_len = sizeof(client_addr);
     int client_fd = accept(server_fd,(sockaddr *)&client_addr,&client_len);
     if (client_fd == -1) {
-        std::cerr << "Failed to accept" << std::endl;
+        // std::cerr << "Failed to accept" << std::endl;
+        LOG_ERROR("Failed to accept");
         close(server_fd);
         close(epoll_fd);
         exit(1);
     }
-    // std::cout << "New connection from " << inet_ntoa(client_addr.sin_addr) << ":" << ntohs(client_addr.sin_port) << std::endl;
+    LOG_DEBUG("Accepted connection from " + std::string(inet_ntoa(client_addr.sin_addr)) + ":" + std::to_string(ntohs(client_addr.sin_port)));
     epoll_event ev = {};
     ev.events = EPOLLIN | EPOLLET;
     ev.data.fd = client_fd;
     if(epoll_ctl(epoll_fd,EPOLL_CTL_ADD,client_fd,&ev) == -1) {
-        std::cerr << "Failed to add client fd to epoll" << std::endl;
+        // std::cerr << "Failed to add client fd to epoll" << std::endl;
+        LOG_ERROR("Failed to add client fd to epoll");
         close(server_fd);
         close(epoll_fd);
         close(client_fd);
@@ -109,7 +118,8 @@ void TCPServer::handleAccept(){
     }
     int flags = fcntl(client_fd,F_GETFL,0);
     if(fcntl(client_fd,F_SETFL,flags | O_NONBLOCK) == -1) {
-        std::cerr << "Failed to set client fd to non-blocking" << std::endl;
+        // std::cerr << "Failed to set client fd to non-blocking" << std::endl;
+        LOG_ERROR("Failed to set client fd to non-blocking");
         close(server_fd);
         close(epoll_fd);
         close(client_fd);
@@ -119,24 +129,27 @@ void TCPServer::handleAccept(){
 
 void TCPServer::handleClient(int fd){
     char *buffer = new char[1024];
+    std::string recvd;
     while(true){
         ssize_t bytes_read = recv(fd,buffer,1024,0);
+        
         if(bytes_read == 0){
-            std::cout<<"Connection closed"<<std::endl;
             close(fd);
             break;
         } else if(bytes_read < 0) {
             if(errno == EAGAIN || errno == EWOULDBLOCK) {
                 break;
             } else {
-                // std::cerr << "Failed to read" << std::endl;
-                close(fd);
                 break;
             }
         } else {
             buffer[bytes_read] = '\0';
-            handle->handle(buffer,fd);
+            recvd += buffer;
+            // handle->handle(buffer,fd);
         }
     }
+    handle->handle(recvd.c_str(),fd);
+    close(fd);
+    LOG_DEBUG("Closed connection");
     delete[] buffer;
 }

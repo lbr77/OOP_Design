@@ -12,7 +12,7 @@ constexpr int MAX_EVENTS = 1000;
 constexpr int DEFAULT_PORT = 8081;
 class Handler {
 public:
-    virtual void handle(char *buffer,int fd) = 0;
+    virtual void handle(const char *buffer,int fd) = 0;
 };
 class TCPServer {
 public:

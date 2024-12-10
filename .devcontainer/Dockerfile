@@ -10,6 +10,13 @@ RUN if [ "${REINSTALL_CMAKE_VERSION_FROM_SOURCE}" != "none" ]; then \
     fi \
     && rm -f /tmp/reinstall-cmake.sh
 
+RUN apt update && \
+    apt install -y default-libmysqlclient-dev \
+    default-mysql-server \
+    libssl-dev \
+    default-mysql-client \
+    libmysqlcppconn-dev
+
 # [Optional] Uncomment this section to install additional vcpkg ports.
 # RUN su vscode -c "${VCPKG_ROOT}/vcpkg install <your-port-name-here>"
 

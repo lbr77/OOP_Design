@@ -1,5 +1,6 @@
 #ifndef _HTTP_H_
 #define _HTTP_H_
+#pragma once
 #include <string>
 #include<nlohmann/json.hpp>
 using json = nlohmann::json;
@@ -27,6 +28,7 @@ const json status_code = {
     {"401","401 Unauthorized"},
     {"403","403 Forbidden"},
     {"404","404 Not Found"},
+    {"405","405 Method Not Allowed"},
     {"500","500 Internal Server Error"}
 };
 
@@ -72,12 +74,19 @@ struct HTTPRequest {
     std::string version;
     json headers;
     std::string body;
+    json cookies;
+    json data;
 };
 struct HTTPResponse {
     std::string version;
-    std::string status_code;
+    // std::string status_code;
+    int status_code;
     std::string status;
     json headers;
     std::string body;
 };
+HTTPResponse makeResponse(int code,std::string ctx,std::string ctx_type);
+
+bool bufferToRequest(const char *buffer,HTTPRequest &req);
+int responseToBuffer(HTTPResponse &res,char * &buffer,int &buffer_len);
 #endif
