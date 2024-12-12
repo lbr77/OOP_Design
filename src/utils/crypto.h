@@ -1,26 +1,25 @@
 #ifndef _CRYPTO_H_
 #define _CRYPTO_H_
 #pragma once
-#include"openssl/md5.h"
-//base64
-#include"openssl/bio.h"
-#include"openssl/evp.h"
-#include"openssl/buffer.h"
-#include<string>
+#include <string>
 
-std::string md5(const std::string& str) {
+#include "openssl/bio.h"
+#include "openssl/buffer.h"
+#include "openssl/evp.h"
+#include "openssl/md5.h"
+
+std::string md5(const std::string &str) {
     unsigned char digest[MD5_DIGEST_LENGTH];
     MD5_CTX ctx;
     MD5_Init(&ctx);
     MD5_Update(&ctx, str.c_str(), str.length());
     MD5_Final(digest, &ctx);
-    
+
     char mdString[33];
-    for(int i = 0; i < 16; i++)
-        sprintf(&mdString[i*2], "%02x", (unsigned int)digest[i]);
+    for (int i = 0; i < 16; i++) sprintf(&mdString[i * 2], "%02x", (unsigned int)digest[i]);
     return std::string(mdString);
 }
-std::string base64_encode(const std::string &str){
+std::string base64_encode(const std::string &str) {
     BIO *bio, *b64;
     BUF_MEM *bufferPtr;
     b64 = BIO_new(BIO_f_base64());
@@ -35,7 +34,7 @@ std::string base64_encode(const std::string &str){
     return result;
 }
 
-std::string base64_decode(const std::string &str){
+std::string base64_decode(const std::string &str) {
     BIO *bio, *b64;
     char buffer[1024];
     b64 = BIO_new(BIO_f_base64());

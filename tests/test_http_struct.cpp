@@ -1,8 +1,9 @@
 #include <gtest/gtest.h>
+
 #include "../src/http/struct.h"
 
 class HTTPRequestTest : public ::testing::Test {
-protected:
+   protected:
     HTTPRequest req;
     void SetUp() override {
         req = HTTPRequest();
@@ -15,13 +16,13 @@ TEST_F(HTTPRequestTest, EmptyRequestTest) {
 }
 
 TEST_F(HTTPRequestTest, MultipleHeadersTest) {
-    const char* buffer = 
+    const char* buffer =
         "GET /test HTTP/1.1\r\n"
         "Host: example.com\r\n"
-        "Accept: text/html\r\n" 
+        "Accept: text/html\r\n"
         "User-Agent: Mozilla/5.0\r\n"
         "\r\n";
-    
+
     ASSERT_TRUE(bufferToRequest(buffer, req));
     EXPECT_EQ(req.headers["host"], "example.com");
     EXPECT_EQ(req.headers["accept"], "text/html");
@@ -54,7 +55,7 @@ TEST_F(HTTPRequestTest, ComplexCookieTest) {
 }
 
 TEST_F(HTTPRequestTest, ComplexJSONTest) {
-    const char* buffer = 
+    const char* buffer =
         "POST /api/data HTTP/1.1\r\n"
         "Content-Type: application/json\r\n"
         "\r\n"
@@ -65,7 +66,17 @@ TEST_F(HTTPRequestTest, ComplexJSONTest) {
     EXPECT_EQ(req.data["user"]["age"], 30);
     EXPECT_EQ(req.data["settings"]["theme"], "dark");
 }
+TEST_F(HTTPRequestTest, ParseQueryTest) {
+    const char* buffer =
+        "GET /search?q=test&lang=en HTTP/1.1\r\n"
+        "Host: example.com\r\n"
+        "\r\n";
 
+    ASSERT_TRUE(bufferToRequest(buffer, req));
+    EXPECT_EQ(req.path, "/search");
+    EXPECT_EQ(req.query["q"], "test");
+    EXPECT_EQ(req.query["lang"], "en");
+}
 TEST_F(HTTPRequestTest, ComplexFormURLEncodedTest) {
     const char* buffer =
         "POST /submit HTTP/1.1\r\n"
@@ -91,56 +102,56 @@ TEST_F(HTTPRequestTest, MalformedHeaderTest) {
     EXPECT_EQ(req.headers["host"], "example.com");
 }
 TEST_F(HTTPRequestTest, CookieTest) {
-    const char* buffer = 
+    const char* buffer =
         "GET / HTTP/1.1\r\n"
         "Cookie: session=abc123; user=john\r\n"
         "\r\n";
-    
+
     ASSERT_TRUE(bufferToRequest(buffer, req));
     EXPECT_EQ(req.cookies["session"], "abc123");
     EXPECT_EQ(req.cookies["user"], "john");
 }
 
 TEST_F(HTTPRequestTest, JSONContentTest) {
-    const char* buffer = 
+    const char* buffer =
         "POST /api/data HTTP/1.1\r\n"
         "Content-Type: application/json\r\n"
         "\r\n"
         "{\"name\":\"john\",\"age\":30}";
-    
+
     ASSERT_TRUE(bufferToRequest(buffer, req));
     EXPECT_EQ(req.data["name"], "john");
     EXPECT_EQ(req.data["age"], 30);
 }
 
 TEST_F(HTTPRequestTest, FormURLEncodedTest) {
-    const char* buffer = 
+    const char* buffer =
         "POST /submit HTTP/1.1\r\n"
         "Content-Type: application/x-www-form-urlencoded\r\n"
         "\r\n"
         "name=john&age=30";
-    
+
     ASSERT_TRUE(bufferToRequest(buffer, req));
     EXPECT_EQ(req.data["name"], "john");
     EXPECT_EQ(req.data["age"], "30");
 }
 
 TEST_F(HTTPRequestTest, InvalidJSONTest) {
-    const char* buffer = 
+    const char* buffer =
         "POST /api/data HTTP/1.1\r\n"
         "Content-Type: application/json\r\n"
         "\r\n"
         "{invalid_json}";
-    
+
     ASSERT_FALSE(bufferToRequest(buffer, req));
 }
 TEST_F(HTTPRequestTest, EmptyHeaderValueTest) {
-    const char* buffer = 
+    const char* buffer =
         "GET /test HTTP/1.1\r\n"
         "Header1:\r\n"
         "Header2: value2\r\n"
         "\r\n";
-    
+
     ASSERT_TRUE(bufferToRequest(buffer, req));
     EXPECT_EQ(req.headers["header1"], "");
     EXPECT_EQ(req.headers["header2"], "value2");
@@ -148,7 +159,7 @@ TEST_F(HTTPRequestTest, EmptyHeaderValueTest) {
 
 TEST_F(HTTPRequestTest, DuplicateHeaderTest) {
     const char* buffer =
-        "GET /test HTTP/1.1\r\n" 
+        "GET /test HTTP/1.1\r\n"
         "Content-Type: text/html\r\n"
         "Content-Type: application/json\r\n"
         "\r\n";
@@ -157,10 +168,10 @@ TEST_F(HTTPRequestTest, DuplicateHeaderTest) {
     EXPECT_EQ(req.headers["content-type"], "application/json");
 }
 
-TEST_F(HTTPRequestTest, LongRequestURITest) { // url too long?
+TEST_F(HTTPRequestTest, LongRequestURITest) {  // url too long?
     std::string longURI(2048, 'a');
-    std::string buffer = "GET /" + longURI + " HTTP/1.1\r\n\r\n"; // 2048 characters ? 
-    
+    std::string buffer = "GET /" + longURI + " HTTP/1.1\r\n\r\n";  // 2048 characters ?
+
     ASSERT_TRUE(bufferToRequest(buffer.c_str(), req));
 }
 
@@ -174,10 +185,8 @@ TEST_F(HTTPRequestTest, SpecialCharactersInHeaderTest) {
     EXPECT_EQ(req.headers["x-custom-header"], "!@#$%^&*()");
 }
 
-
-
 class HTTPResponseTest : public ::testing::Test {
-protected:
+   protected:
     HTTPResponse res;
     char* buffer;
     int buffer_len;
@@ -202,7 +211,7 @@ TEST_F(HTTPResponseTest, BasicResponseTest) {
     res.body = "<html><body>Hello, world!</body></html>";
 
     ASSERT_EQ(responseToBuffer(res, buffer, buffer_len), 0);
-    std::string expected_response = 
+    std::string expected_response =
         "HTTP/1.1 200 OK\r\n"
         "Content-Length: 39\r\n"
         "Content-Type: text/html\r\n"
@@ -219,7 +228,7 @@ TEST_F(HTTPResponseTest, EmptyBodyTest) {
     res.body = "";
 
     ASSERT_EQ(responseToBuffer(res, buffer, buffer_len), 0);
-    std::string expected_response = 
+    std::string expected_response =
         "HTTP/1.1 204 No Content\r\n"
         "Content-Length: 0\r\n"
         "Content-Type: text/html\r\n"
@@ -234,7 +243,7 @@ TEST_F(HTTPResponseTest, MissingStatusCodeTest) {
     res.body = "<html><body>Error</body></html>";
 
     ASSERT_EQ(responseToBuffer(res, buffer, buffer_len), 0);
-    std::string expected_response = 
+    std::string expected_response =
         "HTTP/1.1 500 Internal Server Error\r\n"
         "Content-Length: 31\r\n"
         "Content-Type: text/html\r\n"
@@ -252,7 +261,7 @@ TEST_F(HTTPResponseTest, CustomHeaderTest) {
     res.body = "{\"key\":\"value\"}";
 
     ASSERT_EQ(responseToBuffer(res, buffer, buffer_len), 0);
-    std::string expected_response = 
+    std::string expected_response =
         "HTTP/1.1 200 OK\r\n"
         "Content-Length: 15\r\n"
         "Content-Type: application/json\r\n"
@@ -270,10 +279,11 @@ TEST_F(HTTPResponseTest, LargeBodyTest) {
     res.body = std::string(10000, 'a');
 
     ASSERT_EQ(responseToBuffer(res, buffer, buffer_len), 0);
-    std::string expected_response = 
+    std::string expected_response =
         "HTTP/1.1 200 OK\r\n"
         "Content-Length: 10000\r\n"
         "Content-Type: text/plain\r\n"
-        "\r\n" + std::string(10000, 'a');
+        "\r\n" +
+        std::string(10000, 'a');
     EXPECT_EQ(std::string(buffer, buffer_len), expected_response);
 }
