@@ -10,7 +10,8 @@ typedef vector<User> Users;
 typedef vector<Group> Groups;
 typedef vector<Message> Messages;
 Users selectUserByIDAndPassword(int id, string platform, string password) {  // 登录
-    auto query = SQL::getInstance()->prepareStatement(
+    auto conn = SQL::getInstance();
+    auto query = conn->prepareStatement(
         "SELECT id,nickname,birthdate,created_at,location,platform,status FROM users WHERE id = ? "
         "AND platform = ? AND password = ? AND status = 1;");
     query->setInt(1, id);

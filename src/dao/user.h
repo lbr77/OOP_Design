@@ -6,7 +6,8 @@
 User Login(int id, string password, string platform) {
     LOG_INFO("User Login");
     LOG_DEBUG("Arguments: id=", id, " password=", password, " platform=", platform);
-    auto users = selectUserByNickNameAndPassword(id, platform, password);
+    auto users = selectUserByIDAndPassword(id, platform, password);
+    LOG_DEBUG("Query finished, users.size()=", users.size());
     if (users.size() == 0) {
         return User();
     }
@@ -23,12 +24,17 @@ User Register(string nickname, string password, string platform) {
         return User();
     }
     auto query = SQL::getInstance()->prepareStatement(
-        "INSERT INTO user(nickname,password,platform) VALUES(?,?,?);");
-    query->setInt(1, id);
+        "INSERT INTO users (nickname,password,platform) VALUES(?,?,?);");
+    // query->setInt(1, id);
+    query->setString(1, nickname);
     query->setString(2, password);
     query->setString(3, platform);
     query->executeUpdate();
-    return User(id, "", password, "", "", "", platform, true);
+    auto user = selectUserByNickName(nickname, platform);
+    if (user.size() == 0) {
+        return User();
+    }
+    return user[0];
 }
 User Update(string nickname, string birthdate, string location, int id) {
     LOG_INFO("User Update");
@@ -42,7 +48,7 @@ Users Search(string nickname, string platform) {
     LOG_DEBUG("Arguments: nickname=", nickname, " platform=", platform);
     return selectUserByNickName(nickname, platform);
 }
-Users GetCommonFriends(int id) {
+Users GetCommonFriends(int id) {  // only wechat.
     LOG_INFO("Get Common Friends");
     LOG_DEBUG("Arguments: id=", id);
     return selectUserByCommonFriends(id);

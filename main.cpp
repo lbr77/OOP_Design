@@ -6,8 +6,9 @@
 #include <string>
 #include <vector>
 
+#include "src/api/qq.h"
 #include "src/db/db.h"
-#include "src/http/base.h"
+#include "src/http/file.h"
 #include "src/tcp/server.h"
 #include "src/utils/log.h"
 using std::cin, std::cout, std::endl;
