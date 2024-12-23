@@ -4,7 +4,10 @@
 #pragma once
 #include "handler.h"
 HTTPResponse makeJson(int code, json data) {
-    return makeResponse(code, data.dump(), "application/json");
+    json j;
+    j["code"] = code;
+    j["data"] = data;
+    return makeResponse(code, j.dump(), "application/json");
 }
 class JsonHandler : public Handler {
    public:

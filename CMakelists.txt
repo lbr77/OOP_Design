@@ -13,7 +13,9 @@ FetchContent_Declare(json
     GIT_TAG v3.11.3
 )
 FetchContent_MakeAvailable(json)
+
 find_package(OpenSSL REQUIRED)
+find_package(RTTR REQUIRED)
 include_directories(${OPENSSL_INCLUDE_DIR})
 
 set(MYSQLCPPCONN_INCLUDE_DIRS "/usr/include/cppconn")
@@ -29,6 +31,7 @@ target_link_libraries(CourseTest PRIVATE
 nlohmann_json::nlohmann_json
 OpenSSL::SSL
 OpenSSL::Crypto
+RTTR::Core
 ${MYSQLCPPCONN_LIBRARIES}
 )
 

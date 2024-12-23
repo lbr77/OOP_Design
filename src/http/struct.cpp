@@ -161,7 +161,11 @@ int responseToBuffer(HTTPResponse &res, char *&buffer, int &buffer_len) {
         res.status_code = 500;
     }
     res.status = status_code[std::to_string(res.status_code)].get<std::string>();
-    res.headers["Allow-Access-Control-Origin"] = "*"; // enable cores
+
+    res.headers["Access-Control-Allow-Origin"] = "http://localhost:5173";
+    res.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS";
+    res.headers["Access-Control-Allow-Headers"] = "Content-Type, Cookie";
+    res.headers["Access-Control-Allow-Credentials"] = "true";
     std::string res_str = res.version + " " + res.status + "\r\n";
     res.headers["Content-Length"] = std::to_string(res.body.size());
     for (auto it = res.headers.begin(); it != res.headers.end(); it++) {

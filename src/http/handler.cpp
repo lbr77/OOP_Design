@@ -4,6 +4,12 @@
 
 HTTPResponse Handler::handle(const HTTPRequest &request) {
     // return makeResponse(404,"Not Found","text/html");
+    if (request.method == "OPTIONS") {
+        LOG_DEBUG("OPTIONS request.");
+        LOG_DEBUG("Generating cors headers.");
+        auto resp = makeResponse(200, "OK", "text/plain");
+        return resp;
+    }
     for (auto it = handlers.begin(); it != handlers.end(); it++) {
         if (request.path.substr(0, it->first.size()) == it->first) {
             LOG_DEBUG("Hit path", it->first);

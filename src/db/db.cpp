@@ -43,7 +43,7 @@ bool SQL::connect(const std::string &host, const std::string &user, const std::s
 std::unique_ptr<sql::ResultSet> SQL::executeQuery(const std::string &query) {
     try {
         std::unique_ptr<sql::Statement> stmt(conn->createStatement());
-        LOG_DEBUG("Executing query:", query);
+        LOG_INFO("Executing query:", query);
         return std::unique_ptr<sql::ResultSet>(stmt->executeQuery(query));
     } catch (sql::SQLException &e) {
         LOG_ERROR("Failed to execute query:", std::string(e.what()));
@@ -54,7 +54,7 @@ std::unique_ptr<sql::ResultSet> SQL::executeQuery(const std::string &query) {
 bool SQL::executeUpdate(const std::string &query) {
     try {
         std::unique_ptr<sql::Statement> stmt(conn->createStatement());
-        LOG_DEBUG("Executing update:", query);
+        LOG_INFO("Executing update:", query);
         return stmt->execute(query);
     } catch (sql::SQLException &e) {
         LOG_ERROR("Failed to execute update:", std::string(e.what()));
@@ -64,7 +64,7 @@ bool SQL::executeUpdate(const std::string &query) {
 
 std::unique_ptr<sql::PreparedStatement> SQL::prepareStatement(const std::string &query) {
     try {
-        LOG_DEBUG("Preparing statement:", query);
+        LOG_INFO("Preparing statement:", query);
         return std::unique_ptr<sql::PreparedStatement>(conn->prepareStatement(query));
     } catch (sql::SQLException &e) {
         LOG_ERROR("Failed to prepare statement:", std::string(e.what()));

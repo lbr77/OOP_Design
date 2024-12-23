@@ -18,7 +18,8 @@ print(s.cookies)
 # test POST chats
 # print(s.post("http://localhost:8080/api/qq/chats",json={"type": "group","title": "114514","description": "","creator_id": 1}).json())
 # test add chat member
-
+# print(s.get("http://localhost:8080/api/qq/chats").headers)
+# print(s.get("http://localhost:8080/api/qq/chats").json())
 # print(s.post("http://localhost:8080/api/qq/chats/members",json={"user_id": 4,"chat_id": 1}).json())
 
 # print(s.delete("http://localhost:8080/api/qq/chats/members",json={"chat_id": 1,"user_id": 2}).json())
