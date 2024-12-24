@@ -1,9 +1,29 @@
 import requests as r
 import hashlib
 import base64
+import time
 s = r.Session()
 url = 'http://localhost:8080'
 
-# print(s.post(f"{url}/qq/api/user/login",json={"user_id": 701,"password": hashlib.md5(b"bossbaby").hexdigest()}).json())
-# print(s.post(f"{url}/qq/api/user/register",json={"nickname": "orz","password": hashlib.md5(b"bossbaby").hexdigest()}).json())
-print(s.get(f"{url}/qq/api/user/search?nickname=bossbaby").json())
+def do_action(action, **kwargs):
+    time.sleep(0.01)
+    return s.post(f"{url}/qq/api",json={"action": action, **kwargs}).json()
+
+print(do_action("login", username="libr", password=hashlib.md5(b"libr").hexdigest()))
+# print(do_action("searchFriend",username="bossbaby"))
+# print(do_action("searchGroup",group_name="group1"))
+# print(do_action("addFriend",friend_id=701))
+
+# print(do_action("login", username="bossbaby", password=hashlib.md5(b"bossbaby").hexdigest()))
+# print(do_action("verifyFriend",friend_id=703))
+
+# print(do_action("deleteFriend",friend_id=701))
+
+# print(do_action("createGroup",group_name="group1"))
+# print(do_action("addGroup",group_id=303))
+
+# print(do_action("verifyGroup",group_id=303,user_id=701))
+
+# print(do_action("kickGroupmember",group_id=303,user_id=701))
+
+# print(do_action("deleteGroup",group_id=303))

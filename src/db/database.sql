@@ -37,7 +37,7 @@ CREATE TABLE group_members (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     group_id BIGINT NOT NULL,            -- 群ID
     user_id BIGINT NOT NULL,             -- 用户ID
-    role ENUM('pending','member', 'admin', 'owner') DEFAULT 'member', -- 角色
+    role ENUM('pending','member', 'admin', 'owner') DEFAULT 'pending', -- 角色
     joined_at DATETIME DEFAULT NOW(),    -- 加入时间
     FOREIGN KEY (group_id) REFERENCES groups(id),
     FOREIGN KEY (user_id) REFERENCES users(id)

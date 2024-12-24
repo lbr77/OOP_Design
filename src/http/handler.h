@@ -22,7 +22,7 @@ class Handler {
     void add_handle(string path, Handler *handler);
     void default_handle(Handler *handler);
 
-   private:
+   protected:
     map<string, Handler *> handlers;  // path -> handler
     Handler *default_handler;         // default is file server.
 };

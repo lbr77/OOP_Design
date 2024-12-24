@@ -35,15 +35,15 @@ RTTR::Core
 ${MYSQLCPPCONN_LIBRARIES}
 )
 
-add_executable(CourseTest_test ${SOURCES} test)
+# add_executable(CourseTest_test ${SOURCES} test)
 
-target_link_libraries(CourseTest_test PRIVATE 
-nlohmann_json::nlohmann_json
-OpenSSL::SSL
-OpenSSL::Crypto
-RTTR::Core
-${MYSQLCPPCONN_LIBRARIES}
-)
+# target_link_libraries(CourseTest_test PRIVATE 
+# nlohmann_json::nlohmann_json
+# OpenSSL::SSL
+# OpenSSL::Crypto
+# RTTR::Core
+# ${MYSQLCPPCONN_LIBRARIES}
+# )
 # enable_testing()
 # include(FetchContent)
 # FetchContent_Declare(
