@@ -55,3 +55,12 @@ CREATE TABLE messages (
     FOREIGN KEY (receiver_id) REFERENCES users(id),
     FOREIGN KEY (group_id) REFERENCES groups(id)
 );
+
+CREATE TABLE is_read (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    message_id BIGINT NOT NULL,          -- 消息ID
+    user_id BIGINT NOT NULL,             -- 用户ID
+    read_at DATETIME DEFAULT NOW(),      -- 阅读时间
+    FOREIGN KEY (message_id) REFERENCES messages(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+)
