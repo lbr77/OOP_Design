@@ -22,7 +22,7 @@ class QQHandler : public Handler {
         post_handler["addGroup"] = &QQHandler::handleAddGroup;          // 添加群(用户)
         post_handler["verifyGroup"] = &QQHandler::handleVerifyGroup;    // 验证群(群管理员)
         post_handler["modifyPermission"] = &QQHandler::handleModifyPermission;  // 修改权限(群主)
-        post_handler["deleteGroup"] = &QQHandler::handleDeleteGroup;    // 删除群(群管理员)
+        post_handler["deleteGroup"] = &QQHandler::handleDeleteGroup;  // 删除群(群管理员)
         post_handler["kickGroupmember"] =
             &QQHandler::handleKickGroupMember;  // 踢出群成员(群管理员)
         post_handler["addGroupmember"] = &QQHandler::handleAddGroup;  // 添加群成员(群管理员)
@@ -32,9 +32,10 @@ class QQHandler : public Handler {
         post_handler["sendGroupMessage"] = &QQHandler::handleSendGroupMessage;
         post_handler["markRead"] = &QQHandler::handleMarkRead;  // 标记已读
         // GET // 获取信息
-        post_handler["getInfo"] = &QQHandler::handleGetInfo; // 获取信息（用户、好友、群）
-        post_handler["getMessage"] = &QQHandler::handleGetMessage; // 获取消息，（好友消息，群消息，添加好友，群聊申请）
-        post_handler["getHistoryMessage"] = &QQHandler::handleGetHistoryMessage; // 获取历史消息
+        post_handler["getInfo"] = &QQHandler::handleGetInfo;  // 获取信息（用户、好友、群）
+        post_handler["getMessage"] =
+            &QQHandler::handleGetMessage;  // 获取消息，（好友消息，群消息，添加好友，群聊申请）
+        post_handler["getHistoryMessage"] = &QQHandler::handleGetHistoryMessage;  // 获取历史消息
         default_handle(new FileHandler);
     }
     virtual HTTPResponse handle(const HTTPRequest &req) {
@@ -79,38 +80,39 @@ class QQHandler : public Handler {
         // return makeJson(404, {{"error", "Not Found"}});
         return default_handler->handle(req);
     }
-    HTTPResponse handleModifyPermission(const json &data,int user_id) {
-        if(user_id == -1) return makeJson(403, {{"error", "Not Logged In"}});
-        if(data.find("group_id") == data.end() || data.find("user_id") == data.end() || data.find("role") == data.end()) {
+    HTTPResponse handleModifyPermission(const json &data, int user_id) {
+        if (user_id == -1) return makeJson(403, {{"error", "Not Logged In"}});
+        if (data.find("group_id") == data.end() || data.find("user_id") == data.end() ||
+            data.find("role") == data.end()) {
             return makeJson(400, {{"error", "Bad Request"}});
         }
         auto group_id = data["group_id"].get<int>();
         auto app_user_id = data["user_id"].get<int>();
         auto role = data["role"].get<string>();
         auto res = selectGroupById(group_id);
-        if(!res->next()) {
+        if (!res->next()) {
             return makeJson(404, {{"error", "Group Not Found"}});
         }
         auto ress = selectGroupMember(group_id, user_id);
-        if(!ress->next() || ress->getString("role") != "owner") {
+        if (!ress->next() || ress->getString("role") != "owner") {
             return makeJson(403, {{"error", "Permission Denied"}});
         }
         auto resss = selectGroupMember(group_id, app_user_id);
-        if(!resss->next()) {
+        if (!resss->next()) {
             return makeJson(404, {{"error", "User Not Found"}});
         }
-        if(!updateGroupMember(group_id, app_user_id, role)) {
+        if (!updateGroupMember(group_id, app_user_id, role)) {
             return makeJson(500, {{"error", "Internal Server Error"}});
         }
         return makeJson(200, {{"message", "Modify Permission Success"}});
     }
-    HTTPResponse handleGetHistoryMessage(const json &data,int user_id) {
-        if(user_id == -1) return makeJson(403, {{"error", "Not Logged In"}});
-        if(data.find("friend_id") != data.end()) {
+    HTTPResponse handleGetHistoryMessage(const json &data, int user_id) {
+        if (user_id == -1) return makeJson(403, {{"error", "Not Logged In"}});
+        if (data.find("friend_id") != data.end()) {
             auto friend_id = data["friend_id"].get<int>();
             auto res = selectHistoryPrivateMessageById(user_id, friend_id);
             auto messages = json::array();
-            while(res->next()) {
+            while (res->next()) {
                 json msg;
                 msg["message_id"] = res->getInt("id");
                 msg["sender_id"] = res->getInt("sender_id");
@@ -121,12 +123,11 @@ class QQHandler : public Handler {
                 messages.push_back(msg);
             }
             return makeJson(200, messages);
-        }
-        else if(data.find("group_id") != data.end()) {
+        } else if (data.find("group_id") != data.end()) {
             auto group_id = data["group_id"].get<int>();
             auto res = selectHistoryGroupMessageById(user_id, group_id);
             auto messages = json::array();
-            while(res->next()) {
+            while (res->next()) {
                 json msg;
                 msg["message_id"] = res->getInt("id");
                 msg["sender_id"] = res->getInt("sender_id");
@@ -147,7 +148,7 @@ class QQHandler : public Handler {
         return response;
     }
     HTTPResponse handleGetInfo(const json &data, int user_id) {
-        if(user_id == -1) return makeJson(403, {{"error", "Not Logged In"}});
+        if (user_id == -1) return makeJson(403, {{"error", "Not Logged In"}});
         auto user = json::object();
         auto friends = json::array();
         auto groups = json::array();
@@ -161,7 +162,7 @@ class QQHandler : public Handler {
             user["bind_id"] = res->getString("bind_id");
         }
         auto res2 = selectFriends(user_id, "QQ");
-        while(res2->next()) {
+        while (res2->next()) {
             json friend_;
             friend_["id"] = res2->getInt("id");
             friend_["username"] = res2->getString("nickname");
@@ -172,7 +173,7 @@ class QQHandler : public Handler {
             friends.push_back(friend_);
         }
         auto res3 = selectGroupByUserId(user_id);
-        while(res3->next()) {
+        while (res3->next()) {
             json group;
             group["id"] = res3->getInt("id");
             group["group_name"] = res3->getString("group_name");
@@ -180,23 +181,23 @@ class QQHandler : public Handler {
         }
         return makeJson(200, {{"user", user}, {"friends", friends}, {"groups", groups}});
     }
-    HTTPResponse handleMarkRead(const json &data,int user_id) {
-        if(user_id == -1) return makeJson(403, {{"error", "Not Logged In"}});
-        if(data.find("message_id") == data.end()) {
+    HTTPResponse handleMarkRead(const json &data, int user_id) {
+        if (user_id == -1) return makeJson(403, {{"error", "Not Logged In"}});
+        if (data.find("message_id") == data.end()) {
             return makeJson(400, {{"error", "Bad Request"}});
         }
         auto message_id = data["message_id"].get<int>();
-        if(!updateMessageRead(message_id, user_id)) {
+        if (!updateMessageRead(message_id, user_id)) {
             return makeJson(500, {{"error", "Internal Server Error"}});
         }
         return makeJson(200, {{"message", "Mark Read Success"}});
     }
-    HTTPResponse handleGetMessage(const json &data, int user_id) { // 
+    HTTPResponse handleGetMessage(const json &data, int user_id) {  //
         // （好友消息，群消息，添加好友，群聊申请）
-        if(user_id == -1) return makeJson(403, {{"error", "Not Logged In"}});
-        json message = json::array(); // 
+        if (user_id == -1) return makeJson(403, {{"error", "Not Logged In"}});
+        json message = json::array();  //
         auto res = selectUnreadPrivateMessage(user_id);
-        while(res->next()) { // 未读好友消息
+        while (res->next()) {  // 未读好友消息
             json msg;
             msg["message_id"] = res->getInt("id");
             msg["sender_id"] = res->getInt("sender_id");
@@ -206,7 +207,7 @@ class QQHandler : public Handler {
             message.push_back(msg);
         }
         auto ress = selectUnreadGroupMessage(user_id);
-        while(ress->next()) { // 未读群消息
+        while (ress->next()) {  // 未读群消息
             json msg;
             msg["message_id"] = ress->getInt("id");
             msg["sender_id"] = ress->getInt("sender_id");
@@ -217,7 +218,7 @@ class QQHandler : public Handler {
         }
         json notice = json::array();
         auto resss = selectPendingFriend(user_id);
-        while(resss->next()) { // 添加好友
+        while (resss->next()) {  // 添加好友
             json msg;
             msg["user_id"] = resss->getInt("id");
             msg["username"] = resss->getString("nickname");
@@ -225,7 +226,7 @@ class QQHandler : public Handler {
             notice.push_back(msg);
         }
         auto ressss = selectPendingGroup(user_id);
-        while(resss->next()) { // 添加群
+        while (resss->next()) {  // 添加群
             json msg;
             msg["group_id"] = resss->getInt("id");
             msg["user_id"] = resss->getInt("user_id");
@@ -233,7 +234,6 @@ class QQHandler : public Handler {
             notice.push_back(msg);
         }
         return makeJson(200, {{"message", message, "notice", notice}});
-        
     }
     HTTPResponse handleRegister(const json &data, int user_id) {
         if (user_id != -1) return makeJson(403, {{"error", "Already Logged In"}});

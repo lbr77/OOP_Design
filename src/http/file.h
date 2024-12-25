@@ -15,6 +15,10 @@ using std::string;
 
 class FileHandler : public Handler {  // by default a file server
    public:
+    FileHandler(string root = "public") root(root) {}
+
     virtual HTTPResponse handle(const HTTPRequest &request);  // request to response
+   private:
+    string root;
 };
 #endif

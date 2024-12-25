@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "src/api/qq.h"
+#include "src/api/weibo.h"
 #include "src/db/db.h"
 #include "src/http/file.h"
 #include "src/tcp/server.h"
@@ -33,6 +34,7 @@ int main(int argc, char **argv) {
     Handler handlers;
     TCPServer server(port, &handlers);
     handlers.add_handle("/qq", new QQHandler());
+    handlers.add_handle("/wb", new WeiboHandler());
     handlers.default_handle(new FileHandler());
     server.start();
     return 0;

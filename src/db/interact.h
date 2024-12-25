@@ -241,9 +241,10 @@ auto selectPendingGroup(int user_id) {
     auto res = stmt->executeQuery();
     return res;
 }
-auto selectHistoryPrivateMessageById(int user_id,int friend_id) {
+auto selectHistoryPrivateMessageById(int user_id, int friend_id) {
     auto stmt = SQL::getInstance()->prepareStatement(
-        "SELECT * FROM messages WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?) ORDER BY sent_at DESC");
+        "SELECT * FROM messages WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND "
+        "receiver_id = ?) ORDER BY sent_at DESC");
     stmt->setInt(1, user_id);
     stmt->setInt(2, friend_id);
     stmt->setInt(3, friend_id);
@@ -251,7 +252,7 @@ auto selectHistoryPrivateMessageById(int user_id,int friend_id) {
     auto res = stmt->executeQuery();
     return res;
 }
-auto selectHistoryGroupMessageById(int user_id,int group_id) {
+auto selectHistoryGroupMessageById(int user_id, int group_id) {
     auto stmt = SQL::getInstance()->prepareStatement(
         "SELECT * FROM messages WHERE group_id = ? ORDER BY sent_at DESC");
     stmt->setInt(1, group_id);
