@@ -1,30 +1,43 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import LoginView from '../views/LoginView.vue'
-import IndexView from '../views/IndexView.vue'
-import RegisterView from '../views/RegisterView.vue'
-import recv_tmp from '@/views/recv_tmp.vue'
+import LoginView from '../views/qq/LoginView.vue'
+import IndexView from '../views/qq/IndexView.vue'
+import RegisterView from '../views/qq/RegisterView.vue'
+import LoginViewWx from '@/views/wx/LoginView.vue'
+import IndexViewWx from '@/views/wx/IndexView.vue'
+import RegisterViewWx from '@/views/wx/RegisterView.vue'
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      path: '/login',
+      path: '/qq/login',
       name: 'login',
       component: LoginView
     },
     {
-      path: '/register',
+      path: '/qq/register',
       name: 'register',
       component: RegisterView
     },
     {
-      path: '/',
+      path: '/qq',
       name: 'home',
       component: IndexView
     },
     {
-      path: '/test',
-      name: 'test',
-      component: recv_tmp
+      path: "/wx/login",
+      name: "login_wx",
+      component: LoginViewWx
+    },
+    {
+      path: "/wx/register",
+      name: "register_wx",
+      component: RegisterViewWx
+    },
+    {
+      path: "/wx",
+      name: "home_wx",
+      component: IndexViewWx
     }
   ],
 })

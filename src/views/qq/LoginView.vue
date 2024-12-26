@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-gray-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
       <div>
-        <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">QQ - 注册</h2>
+        <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">QQ - 登录</h2>
       </div>
       <form class="mt-8 space-y-6" @submit.prevent="handleSubmit">
         <div class="rounded-md shadow-sm -space-y-px">
@@ -27,8 +27,8 @@
         <div class="flex items-center justify-between">
 
           <div class="text-sm">
-            <RouterLink to="/login" class="font-medium text-indigo-600 hover:text-indigo-500">
-              已有账户？登录
+            <RouterLink to="/register" class="font-medium text-indigo-600 hover:text-indigo-500">
+              没有账户？注册
             </RouterLink>
           </div>
         </div>
@@ -50,7 +50,6 @@
 <script lang="ts" setup>
 import { ref,onMounted } from 'vue';
 import { qq } from '@/stores/axios';
-import {RouterLink} from 'vue-router';
 import CryptoJS from 'crypto-js';
 import { useRouter } from 'vue-router';
 
@@ -58,9 +57,9 @@ const username = ref('')
 const password = ref('')
 const router = useRouter()
 const handleSubmit = () => {
-  qq("register",{username: username.value, password: CryptoJS.MD5(password.value).toString()}).then(res => {
+  qq("login",{username: username.value, password: CryptoJS.MD5(password.value).toString()}).then(res => {
     if(res.code == 200) {
-      router.push('/login')
+      router.push('/')
     }
   })
 }
@@ -68,7 +67,7 @@ onMounted(()=>{
   qq("getInfo").then(res => {
     if(res.code == 200) {
       console.log("Already logged in")
-      router.push('/')
+      router.push('/qq')
     }else{
       console.log("Not login")
     }

@@ -29,5 +29,12 @@ export const qq = async <T = any>(
   console.log(data);
   return await axiosInstance.post("/qq/api", data).then(data=>data.data);
 };
-
+export const wx = async <T = any>(
+  action: string,
+  data: Record<string, any> = {}
+): Promise<T> => {
+  data.action = action;
+  console.log(data);
+  return await axiosInstance.post("/wx/api", data).then(data=>data.data);
+};
 export default axiosInstance;
