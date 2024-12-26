@@ -1,4 +1,7 @@
-# .
+
+这是一坨关掉了ts check的ts vue。
+
+肯定不会有人看这个东西的吧
 
 This template should help get you started developing with Vue 3 in Vite.
 
