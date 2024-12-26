@@ -1,5 +1,5 @@
-#ifndef _API_H
-#define _API_H
+#ifndef _API_WX_H
+#define _API_WX_H
 #pragma once
 #include "../db/interact.h"
 #include "../http/file.h"
@@ -8,40 +8,40 @@
 #include "../utils/log.h"
 #include "../utils/map.h"
 #include "../utils/uuid.h"
-class QQHandler : public Handler {
+class WXHandler : public Handler {
    public:
-    QQHandler() {
+    WXHandler() {
         // POST
-        post_handler["register"] = &QQHandler::handleRegister;          // 注册1
-        post_handler["login"] = &QQHandler::handleLogin;                // 登录1
-        post_handler["logout"] = &QQHandler::handleLogout;              // 登出1
-        post_handler["addFriend"] = &QQHandler::handleAddFriend;        // 添加好友1
-        post_handler["verifyFriend"] = &QQHandler::handleVerifyFriend;  // 验证好友1
-        post_handler["deleteFriend"] = &QQHandler::handleDeleteFriend;  // 删除好友1
-        post_handler["createGroup"] = &QQHandler::handleCreateGroup;    // 创建群(群管理员)
-        post_handler["addGroup"] = &QQHandler::handleAddGroup;          // 添加群(用户)
-        post_handler["getGroup"] = &QQHandler::handleGetGroup;          // 获取群成员(用户)
-        post_handler["verifyGroup"] = &QQHandler::handleVerifyGroup;    // 验证群(群管理员)
-        post_handler["modifyPermission"] = &QQHandler::handleModifyPermission;  // 修改权限(群主)
-        post_handler["deleteGroup"] = &QQHandler::handleDeleteGroup;  // 删除群(群管理员)
+        post_handler["register"] = &WXHandler::handleRegister;          // 注册1
+        post_handler["login"] = &WXHandler::handleLogin;                // 登录1
+        post_handler["logout"] = &WXHandler::handleLogout;              // 登出1
+        post_handler["addFriend"] = &WXHandler::handleAddFriend;        // 添加好友1
+        post_handler["verifyFriend"] = &WXHandler::handleVerifyFriend;  // 验证好友1
+        post_handler["deleteFriend"] = &WXHandler::handleDeleteFriend;  // 删除好友1
+        post_handler["createGroup"] = &WXHandler::handleCreateGroup;    // 创建群(群管理员)
+        post_handler["addGroup"] = &WXHandler::handleAddGroup;          // 添加群(用户)
+        post_handler["getGroup"] = &WXHandler::handleGetGroup;          // 获取群成员(用户)
+        post_handler["verifyGroup"] = &WXHandler::handleVerifyGroup;    // 验证群(群管理员)
+        post_handler["modifyPermission"] = &WXHandler::handleModifyPermission;  // 修改权限(群主)
+        post_handler["deleteGroup"] = &WXHandler::handleDeleteGroup;  // 删除群(群管理员)
         post_handler["kickGroupmember"] =
-            &QQHandler::handleKickGroupMember;  // 踢出群成员(群管理员)
-        post_handler["addGroupmember"] = &QQHandler::handleAddGroup;  // 邀请加入群(用户)
-        post_handler["acceptGroup"] = &QQHandler::handleAcceptGroup;  // 接受邀请加入群(用户)
-        post_handler["exitGroup"] = &QQHandler::handleExitGroup;      // 退出群(用户)
-        post_handler["searchFriend"] = &QQHandler::handleSearchFriend;
-        post_handler["searchGroup"] = &QQHandler::handleSearchGroup;
-        post_handler["sendMessage"] = &QQHandler::handleSendMessage;
-        post_handler["sendGroupMessage"] = &QQHandler::handleSendGroupMessage;
-        post_handler["markRead"] = &QQHandler::handleMarkRead;  // 标记已读
-        post_handler["updateProfile"] = &QQHandler::handleUpdateProfile;
+            &WXHandler::handleKickGroupMember;  // 踢出群成员(群管理员)
+        post_handler["addGroupmember"] = &WXHandler::handleAddGroup;  // 邀请加入群(用户)
+        post_handler["acceptGroup"] = &WXHandler::handleAcceptGroup;  // 接受邀请加入群(用户)
+        post_handler["exitGroup"] = &WXHandler::handleExitGroup;      // 退出群(用户)
+        post_handler["searchFriend"] = &WXHandler::handleSearchFriend;
+        post_handler["searchGroup"] = &WXHandler::handleSearchGroup;
+        post_handler["sendMessage"] = &WXHandler::handleSendMessage;
+        post_handler["sendGroupMessage"] = &WXHandler::handleSendGroupMessage;
+        post_handler["markRead"] = &WXHandler::handleMarkRead;  // 标记已读
+        post_handler["updateProfile"] = &WXHandler::handleUpdateProfile;
         // GET // 获取信息
-        post_handler["getInfo"] = &QQHandler::handleGetInfo;  // 获取信息（用户、好友、群）
+        post_handler["getInfo"] = &WXHandler::handleGetInfo;  // 获取信息（用户、好友、群）
         post_handler["getMessage"] =
-            &QQHandler::handleGetMessage;  // 获取消息，（好友消息，群消息，添加好友，群聊申请）
-        post_handler["getRecentMessage"] = &QQHandler::handleGetRecentMessage;  // 获取最近消息
-        post_handler["getHistoryMessage"] = &QQHandler::handleGetHistoryMessage;  // 获取历史消息
-        post_handler["bindWeChat"] = &QQHandler::handleBindWeChat;  // 绑定微信
+            &WXHandler::handleGetMessage;  // 获取消息，（好友消息，群消息，添加好友，群聊申请）
+        post_handler["getRecentMessage"] = &WXHandler::handleGetRecentMessage;  // 获取最近消息
+        post_handler["getHistoryMessage"] = &WXHandler::handleGetHistoryMessage;  // 获取历史消息
+        post_handler["bindWeChat"] = &WXHandler::handleBindWeChat;  // 绑定微信
         default_handle(new FileHandler);
     }
     virtual HTTPResponse handle(const HTTPRequest &req) {
@@ -673,7 +673,7 @@ class QQHandler : public Handler {
     }
 
    private:
-    map<string, HTTPResponse (QQHandler::*)(const json &, int)> post_handler;
-    map<string, HTTPResponse (QQHandler::*)(const json &, int)> get_handler;
+    map<string, HTTPResponse (WXHandler::*)(const json &, int)> post_handler;
+    map<string, HTTPResponse (WXHandler::*)(const json &, int)> get_handler;
 };
 #endif

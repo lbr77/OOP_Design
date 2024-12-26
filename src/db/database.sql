@@ -5,9 +5,9 @@ CREATE TABLE users (
     id BIGINT AUTO_INCREMENT PRIMARY KEY, -- 唯一用户ID
     nickname VARCHAR(50) NOT NULL,        -- 昵称
     password CHAR(64) NOT NULL,           -- 密码
-    birthdate DATE,                       -- 出生日期
+    birthdate DATE DEFAULT '2000-01-01',
     created_at DATETIME DEFAULT NOW(), -- 注册时间
-    location VARCHAR(100),                -- 所在地
+    location VARCHAR(100) DEFAULT 'China', -- 地区
     platform ENUM('QQ', 'WeChat') NOT NULL, -- 平台类型（如QQ或微信）
     bind_id BIGINT,                  -- QQ ID（可为空，与微信绑定时填写）
     status TINYINT DEFAULT 1              -- 用户状态，1为活跃，0为停用
@@ -37,7 +37,7 @@ CREATE TABLE group_members (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     group_id BIGINT NOT NULL,            -- 群ID
     user_id BIGINT NOT NULL,             -- 用户ID
-    role ENUM('pending','member', 'admin', 'owner') DEFAULT 'pending', -- 角色
+    role ENUM('pending','invited','member', 'admin', 'owner') DEFAULT 'pending', -- 角色
     joined_at DATETIME DEFAULT NOW(),    -- 加入时间
     FOREIGN KEY (group_id) REFERENCES groups(id),
     FOREIGN KEY (user_id) REFERENCES users(id)

@@ -31,7 +31,7 @@ bool try_file(const std::string &path, std::ifstream &file) {
 }
 HTTPResponse FileHandler::handle(const HTTPRequest &request) {  // file server
     ifstream file;
-    string path = root + request.path;
+    string path = "public" + request.path;
     HTTPResponse response =
         makeResponse(404, "Not Found", "text/plain");  // assert all files are binary.
     if (try_file(path, file)) {

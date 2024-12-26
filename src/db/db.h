@@ -6,14 +6,22 @@
 #include <cppconn/prepared_statement.h>
 #include <cppconn/resultset.h>
 #include <cppconn/statement.h>
-
+#include <time.h>
+#include <experimental/chrono>
 #include <memory>
 #include <string>
 class SQL {
    private:
     static SQL *instance;
     sql::Driver *driver;
+    std::chrono::system_clock::time_point lastConnectTime;
+    std::string host;
+    std::string user;
+    std::string password;
+    std::string dbName;
     std::unique_ptr<sql::Connection> conn;
+    // std::unique_ptr<sql::PreparedStatement> stmt;
+    std::map<std::string, std::unique_ptr<sql::PreparedStatement>> stmts;
     SQL();
 
    public:

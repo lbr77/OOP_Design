@@ -14,6 +14,30 @@ auto selectUserById(int user_id, string platform) {
     auto res = query->executeQuery();
     return res;
 }
+bool updateBind(int user_id,int bind_wx_id){
+    auto stmt = SQL::getInstance()->prepareStatement(
+        "UPDATE users SET bind_id = ? WHERE id = ?");
+    stmt->setInt(1, bind_wx_id);
+    stmt->setInt(2, user_id);
+    if (stmt->executeUpdate()) {
+        stmt->close();
+        return true;
+    }
+    return false;
+}
+bool updateUser(int user_id,string nickname, string birthdate, string location) {
+    auto stmt = SQL::getInstance()->prepareStatement(
+        "UPDATE users SET nickname = ?, birthdate = ?, location = ? WHERE id = ?");
+    stmt->setString(1, nickname);
+    stmt->setString(2, birthdate);
+    stmt->setString(3, location);
+    stmt->setInt(4, user_id);
+    if (stmt->executeUpdate()) {
+        stmt->close();
+        return true;
+    }
+    return false;
+}
 auto selectUserByNamePassword(string username, string password, string platform) {
     auto query = SQL::getInstance()->prepareStatement(
         "SELECT * FROM users WHERE nickname = ? AND password = ? AND platform = ?");
@@ -29,7 +53,11 @@ bool insertUser(string username, string password, string platform) {
     stmt->setString(1, username);
     stmt->setString(2, password);
     stmt->setString(3, platform);
-    return stmt->executeUpdate();
+    if (stmt->executeUpdate()) {
+        stmt->close();
+        return true;
+    }
+    return false;
 }
 bool insertFriend(int user_id, int friend_id,
                   string status = "pending") {  // default status is pending
@@ -38,7 +66,11 @@ bool insertFriend(int user_id, int friend_id,
     stmt->setInt(1, user_id);
     stmt->setInt(2, friend_id);
     stmt->setString(3, status);
-    return stmt->executeUpdate();
+    if (stmt->executeUpdate()) {
+        stmt->close();
+        return true;
+    }
+    return false;
 }
 bool updateFriend(int user_id, int friend_id) {
     auto stmt = SQL::getInstance()->prepareStatement(
@@ -46,7 +78,11 @@ bool updateFriend(int user_id, int friend_id) {
     stmt->setString(1, "active");
     stmt->setInt(2, user_id);
     stmt->setInt(3, friend_id);
-    return stmt->executeUpdate();
+    if (stmt->executeUpdate()) {
+        stmt->close();
+        return true;
+    }
+    return false;
 }
 auto selectFriend(int user_id, int friend_id) {
     auto query = SQL::getInstance()->prepareStatement(
@@ -87,7 +123,11 @@ bool createGroup(int user_id, string group_name, string platform) {
     stmt->setInt(1, user_id);
     stmt->setString(2, group_name);
     stmt->setString(3, platform);
-    return stmt->executeUpdate();
+    if (stmt->executeUpdate()) {
+        stmt->close();
+        return true;
+    }
+    return false;
 }
 auto selectGroupByCreator(int user_id, string group_name) {
     auto query = SQL::getInstance()->prepareStatement(
@@ -113,6 +153,14 @@ auto selectGroupByUserId(int user_id) {
     auto res = query->executeQuery();
     return res;
 }
+auto selectGroupMemberByGroupId(int group_id) {
+    auto query = SQL::getInstance()->prepareStatement(
+        "SELECT u.id, u.nickname, gm.role FROM users u INNER JOIN group_members gm ON u.id = "
+        "gm.user_id WHERE gm.group_id = ?");
+    query->setInt(1, group_id);
+    auto res = query->executeQuery();
+    return res;
+}
 bool insertGroupMember(int group_id, int user_id, string role = "pending") {
     LOG_DEBUG(group_id, user_id, role);
     auto stmt = SQL::getInstance()->prepareStatement(
@@ -120,7 +168,11 @@ bool insertGroupMember(int group_id, int user_id, string role = "pending") {
     stmt->setInt(1, group_id);
     stmt->setInt(2, user_id);
     stmt->setString(3, role);
-    return stmt->executeUpdate();
+    if (stmt->executeUpdate()) {
+        stmt->close();
+        return true;
+    }
+    return false;
 }
 auto selectGroupMember(int group_id, int user_id) {
     auto query = SQL::getInstance()->prepareStatement(
@@ -136,16 +188,24 @@ bool updateGroupMember(int group_id, int user_id, string role) {
     stmt->setString(1, role);
     stmt->setInt(2, group_id);
     stmt->setInt(3, user_id);
-    return stmt->executeUpdate();
+    if (stmt->executeUpdate()) {
+        stmt->close();
+        return true;
+    }
+    return false;
 }
 bool deleteGroupById(int group_id) {
     auto stmt =
         SQL::getInstance()->prepareStatement("DELETE FROM group_members WHERE group_id = ?");
     stmt->setInt(1, group_id);
     if (stmt->executeUpdate()) {
+        stmt->close();
         auto stmt2 = SQL::getInstance()->prepareStatement("DELETE FROM groups WHERE id = ?");
         stmt2->setInt(1, group_id);
-        return stmt2->executeUpdate();
+        if (stmt2->executeUpdate()) {
+            stmt2->close();
+            return true;
+        }
     }
     return false;
 }
@@ -154,7 +214,11 @@ bool deleteGroupMember(int group_id, int user_id) {
         "DELETE FROM group_members WHERE group_id = ? AND user_id = ?");
     stmt->setInt(1, group_id);
     stmt->setInt(2, user_id);
-    return stmt->executeUpdate();
+    if (stmt->executeUpdate()) {
+        stmt->close();
+        return true;
+    }
+    return false;
 }
 auto searchUser(string username, string platform) {
     auto query = SQL::getInstance()->prepareStatement(
@@ -180,7 +244,11 @@ bool insertPrivateMessage(int sender_id, int receiver_id, string content) {
     stmt->setInt(2, receiver_id);
     stmt->setString(3, content);
     stmt->setString(4, "private");
-    return stmt->executeUpdate();
+    if (stmt->executeUpdate()) {
+        stmt->close();
+        return true;
+    }
+    return false;
 }
 bool insertGroupMessage(int sender_id, int group_id, string content) {
     auto stmt = SQL::getInstance()->prepareStatement(
@@ -189,14 +257,22 @@ bool insertGroupMessage(int sender_id, int group_id, string content) {
     stmt->setInt(2, group_id);
     stmt->setString(3, content);
     stmt->setString(4, "group");
-    return stmt->executeUpdate();
+    if (stmt->executeUpdate()) {
+        stmt->close();
+        return true;
+    }
+    return false;
 }
 bool updateMessageRead(int message_id, int user_id) {
     auto stmt = SQL::getInstance()->prepareStatement(
         "INSERT INTO is_read (message_id,user_id) VALUES (?,?)");
     stmt->setInt(1, message_id);
     stmt->setInt(2, user_id);
-    return stmt->executeUpdate();
+    if (stmt->executeUpdate()) {
+        stmt->close();
+        return true;
+    }
+    return false;
 }
 auto selectUnreadPrivateMessage(int user_id) {
     auto stmt = SQL::getInstance()->prepareStatement(
@@ -208,6 +284,63 @@ auto selectUnreadPrivateMessage(int user_id) {
         "	AND ir.user_id = m.receiver_id"
         ")");
     stmt->setInt(1, user_id);
+    auto res = stmt->executeQuery();
+    return res;
+}
+auto selectLatestMessage(int user_id) {
+    auto stmt = SQL::getInstance()->prepareStatement(
+        "SELECT  "
+        "    m.*, "
+        "    CASE  "
+        "        WHEN m.message_type = 'group' THEN g.group_name "
+        "        ELSE ( "
+        "            SELECT u.nickname  "
+        "            FROM users u  "
+        "            WHERE u.id = CASE  "
+        "                WHEN m.sender_id = ? THEN m.receiver_id  "
+        "                ELSE m.sender_id  "
+        "            END "
+        "        ) "
+        "    END AS name, "
+        "		CASE  "
+        "        WHEN m.message_type = 'group' THEN ( "
+        "            SELECT gm.role  "
+        "            FROM group_members gm  "
+        "            WHERE gm.group_id = m.group_id  "
+        "              AND gm.user_id = ? "
+        "        ) "
+        "        ELSE NULL "
+        "    END AS user_role "
+        "FROM messages m "
+        "LEFT JOIN groups g ON m.group_id = g.id "
+        "WHERE m.id IN ( "
+        "    SELECT sub.id "
+        "    FROM ( "
+        "        SELECT  "
+        "            MAX(m_inner.id) AS id "
+        "        FROM messages m_inner "
+        "        WHERE  "
+        "            m_inner.sender_id = ?  "
+        "            OR m_inner.receiver_id = ? "
+        "            OR m_inner.group_id IN ( "
+        "                SELECT gm.group_id  "
+        "                FROM group_members gm  "
+        "                WHERE gm.user_id = ? "
+        "            ) "
+        "        GROUP BY  "
+        "            CASE  "
+        "                WHEN m_inner.message_type = 'private' THEN "
+        "CONCAT(LEAST(m_inner.sender_id, m_inner.receiver_id), '_', GREATEST(m_inner.sender_id, "
+        "m_inner.receiver_id)) "
+        "                ELSE m_inner.group_id "
+        "            END "
+        "    ) sub "
+        "); ");
+    stmt->setInt(1, user_id);
+    stmt->setInt(2, user_id);
+    stmt->setInt(3, user_id);
+    stmt->setInt(4, user_id);
+    stmt->setInt(5, user_id);
     auto res = stmt->executeQuery();
     return res;
 }
@@ -234,9 +367,17 @@ auto selectPendingFriend(int user_id) {
 
 auto selectPendingGroup(int user_id) {
     auto stmt = SQL::getInstance()->prepareStatement(
-        "SELECT gm.* FROM group_members gm JOIN group_members gm2 ON gm.group_id = gm2.group_id "
+        "SELECT gm.*,u.nickname FROM group_members gm JOIN group_members gm2 ON gm.group_id = "
+        "gm2.group_id  JOIN users u ON gm.user_id = u.id "
         "WHERE gm2.user_id = ? AND (gm2.role = 'admin' OR gm2.role = 'owner') AND gm.role = "
         "'pending';");
+    stmt->setInt(1, user_id);
+    auto res = stmt->executeQuery();
+    return res;
+}
+auto selectInvitedGroup(int user_id) {
+    auto stmt = SQL::getInstance()->prepareStatement(
+        "SELECT * FROM group_members WHERE user_id = ? AND role ='invited';");
     stmt->setInt(1, user_id);
     auto res = stmt->executeQuery();
     return res;
@@ -244,7 +385,7 @@ auto selectPendingGroup(int user_id) {
 auto selectHistoryPrivateMessageById(int user_id, int friend_id) {
     auto stmt = SQL::getInstance()->prepareStatement(
         "SELECT * FROM messages WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND "
-        "receiver_id = ?) ORDER BY sent_at DESC");
+        "receiver_id = ?) ORDER BY sent_at ASC");
     stmt->setInt(1, user_id);
     stmt->setInt(2, friend_id);
     stmt->setInt(3, friend_id);
@@ -254,7 +395,7 @@ auto selectHistoryPrivateMessageById(int user_id, int friend_id) {
 }
 auto selectHistoryGroupMessageById(int user_id, int group_id) {
     auto stmt = SQL::getInstance()->prepareStatement(
-        "SELECT * FROM messages WHERE group_id = ? ORDER BY sent_at DESC");
+        "SELECT * FROM messages WHERE group_id = ? ORDER BY sent_at ASC");
     stmt->setInt(1, group_id);
     auto res = stmt->executeQuery();
     return res;
