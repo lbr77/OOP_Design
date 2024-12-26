@@ -68,7 +68,7 @@ onMounted(()=>{
   qq("getInfo").then(res => {
     if(res.code == 200) {
       console.log("Already logged in")
-      router.push('/')
+      router.push('/qq')
     }else{
       console.log("Not login")
     }

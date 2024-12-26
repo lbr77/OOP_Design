@@ -68,7 +68,7 @@ onMounted(()=>{
   wx("getInfo").then(res => {
     if(res.code == 200) {
       console.log("Already logged in")
-      router.push('/')
+      router.push('/wx')
     }else{
       console.log("Not login")
     }

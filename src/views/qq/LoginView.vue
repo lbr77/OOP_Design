@@ -27,7 +27,7 @@
         <div class="flex items-center justify-between">
 
           <div class="text-sm">
-            <RouterLink to="/register" class="font-medium text-indigo-600 hover:text-indigo-500">
+            <RouterLink to="/qq/register" class="font-medium text-indigo-600 hover:text-indigo-500">
               没有账户？注册
             </RouterLink>
           </div>
@@ -59,7 +59,7 @@ const router = useRouter()
 const handleSubmit = () => {
   qq("login",{username: username.value, password: CryptoJS.MD5(password.value).toString()}).then(res => {
     if(res.code == 200) {
-      router.push('/')
+      router.push('/qq')
     }
   })
 }

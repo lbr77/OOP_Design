@@ -25,9 +25,9 @@
               <SearchIcon class="h-5 w-5" />
             </button>
             <button class="text-red-200 hover:text-red-500" aria-label="退出" @click="()=>{
-                wx('logout').then(res=>{
+                wb('logout').then(res=>{
                   if(res.code == 200){
-                    router.push('/wx/login')
+                    router.push('/wb/login')
                   }
                 })
               }">
@@ -427,10 +427,14 @@
       </div>
       <form @submit.prevent="inviteMember" class="space-y-4">
         <div>
-          <label for="inviteEmail" class="block text-sm font-medium text-gray-700">邮箱地址</label>
-          <input id="inviteEmail" v-model="inviteId" type="email" required
-            class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-            placeholder="请输入邮箱地址" />
+          <label for="inviteFriend" class="block text-sm font-medium text-gray-700">选择好友</label>
+          <select id="inviteFriend" v-model="selectedFriend" required
+            class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+            <option value="" disabled>请选择一位好友</option>
+            <option v-for="friend in friends" :key="friend.id" :value="friend.id">
+              {{ friend.username }}
+            </option>
+          </select>
         </div>
         <div class="flex justify-end space-x-3">
           <button type="button" @click="closeInviteMemberModal"
@@ -452,12 +456,13 @@
 //@ts-nocheck
 import { ref,onMounted, watch,onUnmounted } from 'vue'
 import { UsersIcon, UserIcon, SettingsIcon,InfoIcon ,SendIcon, UserPlusIcon, CircleAlertIcon,SearchIcon,XIcon, LogOutIcon } from 'lucide-vue-next'
-import { wx } from '@/stores/axios'
+import { wb } from '@/stores/axios'
 import { useRouter } from 'vue-router'
 
+
+const isInviteMemberModalOpen = ref(false)
 const isUserProfilePanelOpen = ref(false)
 const isSettingsPanelOpen = ref(false)
-const isInviteMemberModalOpen = ref(false)
 const isMemberManagementOpen = ref(false)
 const isAddActionModalOpen = ref(false)
 const isSearchPanelOpen = ref(false)
@@ -467,11 +472,11 @@ const groups = ref([])
 const user = ref({});
 const chats = ref([])
 const modalTitle = ref('')
+const selectedFriend = ref(0);
 const modalPlaceholder = ref('')
 const modalActionText = ref('')
 const modalInput = ref('')
 const currentAction = ref('')
-const inviteId = ref('')
 const bottomEl = ref(null)
 const editingUserProfile = ref({ ...user.value })
 const searchQuery = ref('')
@@ -496,7 +501,7 @@ const openSearchPanel = () => {
 const acceptFriendRequest = (id,idx) => {
   console.log('Accepting friend request')
   // console.log(id)
-  wx("verifyFriend",{friend_id: id}).then(res=>{
+  wb("verifyFriend",{friend_id: id}).then(res=>{
     if(res.code == 200){
       console.log(res.data)
       // notices.slice(idx,1)
@@ -512,13 +517,13 @@ const handleSearch = () => {
   if (searchQuery.value.trim()) {
     // 实现搜索逻辑
     console.log('Searching for:', searchQuery.value)
-    wx("searchFriend",{username: searchQuery.value}).then(res=>{
+    wb("searchFriend",{username: searchQuery.value}).then(res=>{
       if(res.code == 200){
         console.log(res.data)
         searchResultsFriend.value = res.data.result;
       }
     });
-    wx("searchGroup",{group_name: searchQuery.value}).then(res=>{
+    wb("searchGroup",{group_name: searchQuery.value}).then(res=>{
       if(res.code == 200){
         console.log(res.data)
         searchResultsGroup.value = res.data.result;
@@ -534,7 +539,7 @@ const scrollToBottom = () => {
 };
 const acceptGroupRequest = (user_id,group_id,idx) => {
   console.log('Accepting group request')
-  wx("verifyGroup",{group_id: group_id,user_id: user_id}).then(res=>{
+  wb("verifyGroup",{group_id: group_id,user_id: user_id}).then(res=>{
     if(res.code == 200){
       console.log(res.data)
       notices.value.splice(idx,1)
@@ -569,21 +574,21 @@ const handleAddAction = () => {
   if (modalInput.value.trim()) {
     if (currentAction.value === 'addFriend') {
       // console.log('Adding friend:', modalInput.value)
-      wx("addFriend",{friend_id: parseInt(modalInput.value)}).then(res=>{
+      wb("addFriend",{friend_id: parseInt(modalInput.value)}).then(res=>{
         if(res.code == 200){
           friends.value.push(res.data)
         }
       })
     } else if (currentAction.value === 'createGroup') {
       // console.log('Creating group:', modalInput.value)
-      wx("createGroup",{group_name: modalInput.value}).then(res=>{
+      wb("createGroup",{group_name: modalInput.value}).then(res=>{
         if(res.code == 200){
           groups.value.push(res.data)
         }
       })
       // 实现创建群组的逻辑
     } else if(currentAction.value === 'addGroup') {
-      wx("addGroup",{group_id: parseInt(modalInput.value)}).then(res=>{
+      wb("addGroup",{group_id: parseInt(modalInput.value)}).then(res=>{
         if(res.code == 200){
           groups.value.push(res.data)
         }
@@ -599,7 +604,7 @@ const sendMessage = () => {
       if(friend_id == null){
         friend_id = curChat.value.user_id;
       }
-      wx("sendMessage",{message: newMessage.value,friend_id: friend_id}).then(res=>{
+      wb("sendMessage",{message: newMessage.value,friend_id: friend_id}).then(res=>{
       if(res.code == 200){
         newMessage.value = '';
         getMessage();
@@ -610,7 +615,7 @@ const sendMessage = () => {
       }
     })
     }else{
-      wx("sendGroupMessage",{message: newMessage.value,group_id: curChat.value.group_id}).then(res=>{
+      wb("sendGroupMessage",{message: newMessage.value,group_id: curChat.value.group_id}).then(res=>{
       if(res.code == 200){
         newMessage.value = '';
         getMessage();
@@ -628,22 +633,22 @@ const markAsRead = (data) => {
   if(data.sender_id != user.value.id){
     showNotification("新消息",data.content);
   }
-  wx("markRead",{message_id: data.message_id}).then(res=>{
+  wb("markRead",{message_id: data.message_id}).then(res=>{
     if(res.code == 200){
       // console.log(res.data)
     }});
 }
 const getInfo = () => {
-  wx("getInfo").then(res=>{
+  wb("getInfo").then(res=>{
     if(res.code == 200){
       user.value = res.data.user;
       friends.value = res.data.friends
       groups.value = res.data.groups;
     }else{
-      router.push('/wx/login')
+      router.push('/wb/login')
     }
   })
-  wx("getMessage").then(res=>{
+  wb("getMessage").then(res=>{
     if(res.code == 200){
       // console.log(res.data)
       res.data.message.map(markAsRead)
@@ -657,13 +662,13 @@ const getInfo = () => {
 const getMessage = () => {
   if(curChat.value.message_type == "private"){
       const friend_id =  curChat.value.sender_id == user.value.id ? curChat.value.receiver_id : curChat.value.sender_id;
-      wx("getHistoryMessage",{friend_id: friend_id}).then(res=>{
+      wb("getHistoryMessage",{friend_id: friend_id}).then(res=>{
         if(res.code == 200){
           messages.value = res.data;
         }
       })
     }else if(curChat.value.message_type == "group"){
-      wx("getHistoryMessage",{group_id: curChat.value.group_id}).then(res=>{
+      wb("getHistoryMessage",{group_id: curChat.value.group_id}).then(res=>{
         if(res.code == 200){
           messages.value = res.data
         }
@@ -674,7 +679,7 @@ const getMessage = () => {
     })
 }
 const getRecentMessage = () => {
-  wx("getRecentMessage").then(res=>{
+  wb("getRecentMessage").then(res=>{
     if(res.code == 200){
       if(res.data.length > 0){
         if(curChat.value.name == ""){
@@ -695,7 +700,7 @@ const deleteFriend = () => {
   console.log(curChat.value)
   if (curChat.value && curChat.value.message_type === 'private') {
     const friend_id = curChat.value.sender_id == user.value.id ? curChat.value.receiver_id : curChat.value.sender_id;
-    wx("deleteFriend",{friend_id: friend_id}).then(res=>{
+    wb("deleteFriend",{friend_id: friend_id}).then(res=>{
       if(res.code == 200){
         friends.value = friends.value.filter(friend => friend.id !== friend_id)
       }
@@ -707,7 +712,7 @@ const deleteFriend = () => {
 const openMemberManagement = () => {
   console.log(curChat.value)
   if (curChat.value && curChat.value.message_type === 'group' && (curChat.value.user_role === 'admin' || curChat.value.user_role === 'owner')) {
-    wx("getGroup",{group_id: curChat.value.group_id}).then(res=>{
+    wb("getGroup",{group_id: curChat.value.group_id}).then(res=>{
       if(res.code == 200){
         members.value = res.data
         isMemberManagementOpen.value = true
@@ -722,7 +727,7 @@ const closeMemberManagement = () => {
 }
 const exitGroup = () => {
   if (curChat.value && curChat.value.message_type === 'group' && curChat.value.user_role !== 'owner') {
-    wx("exitGroup",{group_id: curChat.value.group_id}).then(res=>{
+    wb("exitGroup",{group_id: curChat.value.group_id}).then(res=>{
       if(res.code == 200){
         groups.value = groups.value.filter(group => group.id !== curChat.value.group_id)
       }
@@ -733,7 +738,7 @@ const exitGroup = () => {
 }
 const deleteGroup = () => {
   if (curChat.value && curChat.value.message_type === 'group' && curChat.value.user_role === 'owner') {
-    wx("deleteGroup",{group_id: curChat.value.group_id}).then(res=>{
+    wb("deleteGroup",{group_id: curChat.value.group_id}).then(res=>{
       if(res.code == 200){
         groups.value = groups.value.filter(group => group.id !== curChat.value.group_id)
       }
@@ -744,7 +749,7 @@ const deleteGroup = () => {
 }
 const changeMemberRole = (member) => {
   // console.log('Changing role for member:', member.name)
-  wx("modifyPermission",{group_id: curChat.value.group_id,user_id: member.id, role: member.role == 'member' ? 'admin' : 'member'
+  wb("modifyPermission",{group_id: curChat.value.group_id,user_id: member.id, role: member.role == 'member' ? 'admin' : 'member'
   }).then(res=>{
     if(res.code == 200){
       members.value = members.value.map(m => {
@@ -758,7 +763,7 @@ const changeMemberRole = (member) => {
   })
 }
 const removeMember = (member) => { // TODO:
-  wx("kickGroupmember",{group_id: curChat.value.group_id,user_id: member.id}).then(res=>{
+  wb("kickGroupmember",{group_id: curChat.value.group_id,user_id: member.id}).then(res=>{
     if(res.code == 200){
       members.value = members.value.filter(m => m.id !== member.id)
       showNotification('移除成员', `已将 ${member.nickname} 移出群组`)
@@ -811,7 +816,7 @@ const closeUserProfilePanel = () => {
 
 const updateUserProfile = () => {
   user.value = { ...editingUserProfile.value }
-  wx("updateProfile",editingUserProfile.value).then(res=>{
+  wb("updateProfile",editingUserProfile.value).then(res=>{
     if(res.code == 200){
       showNotification('更新个人信息', '您的个人信息已成功更新')
     }
@@ -824,14 +829,17 @@ const openInviteMemberModal = () => {
 
 const closeInviteMemberModal = () => {
   isInviteMemberModalOpen.value = false
-  inviteId.value = ''
+  selectedFriend.value = 0
 }
 
 const inviteMember = () => {
-  if (inviteId.value.trim()) {
-    // console.log('Inviting member:', inviteEmail.value)
-    // 这里实现邀请成员的逻辑
-    showNotification('邀请成员', `已发送邀请至：${inviteId.value}`)
+  if (selectedFriend.value && curChat.value && curChat.value.message_type === 'group') {
+    console.log('Inviting member to group:', curChat.value.name, 'Friend_id:', selectedFriend.value)
+    wb("addGroupmember",{group_id: curChat.value.group_id,friend_id: selectedFriend.value}).then(res=>{
+      if(res.code == 200){
+        showNotification('邀请新成员', `已成功邀请 ${selectedFriend.value} 加入群组：${curChat.value.name}`)
+      }
+    })
     closeInviteMemberModal()
   }
 }
