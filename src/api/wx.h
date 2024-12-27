@@ -52,7 +52,7 @@ class WXHandler : public Handler {
         }
         LOG_DEBUG("User ID:", user_id);
         try {
-            if (req.path == "/WX/api") {
+            if (req.path == "/wx/api") {
                 if (req.method == "POST") {
                     if (req.data.find("action") == req.data.end()) {
                         return makeJson(400, {{"error", "Bad Request"}});
