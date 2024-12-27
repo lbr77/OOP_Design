@@ -19,15 +19,15 @@ class QQHandler : public Handler {
         post_handler["verifyFriend"] = &QQHandler::handleVerifyFriend;  // 验证好友1
         post_handler["deleteFriend"] = &QQHandler::handleDeleteFriend;  // 删除好友1
         post_handler["createGroup"] = &QQHandler::handleCreateGroup;    // 创建群(群管理员)
-        post_handler["addGroup"] = &QQHandler::handleAddGroup;          // 添加群(用户)
+        post_handler["addGroup"] = &QQHandler::handleAddGroup;          // 申请加入群(用户)
         post_handler["getGroup"] = &QQHandler::handleGetGroup;          // 获取群成员(用户)
         post_handler["verifyGroup"] = &QQHandler::handleVerifyGroup;    // 验证群(群管理员)
         post_handler["modifyPermission"] = &QQHandler::handleModifyPermission;  // 修改权限(群主)
         post_handler["deleteGroup"] = &QQHandler::handleDeleteGroup;  // 删除群(群管理员)
         post_handler["kickGroupmember"] =
             &QQHandler::handleKickGroupMember;  // 踢出群成员(群管理员)
-        post_handler["addGroupmember"] = &QQHandler::handleAddGroup;  // 邀请加入群(用户)
-        post_handler["acceptGroup"] = &QQHandler::handleAcceptGroup;  // 接受邀请加入群(用户)
+        post_handler["addGroupmember"] = &QQHandler::handleInviteGroup;  // 邀请加入群(用户)
+        post_handler["acceptGroup"] = &QQHandler::handleAcceptGroup;  // 同意加入群(用户)
         post_handler["exitGroup"] = &QQHandler::handleExitGroup;      // 退出群(用户)
         post_handler["searchFriend"] = &QQHandler::handleSearchFriend;
         post_handler["searchGroup"] = &QQHandler::handleSearchGroup;
@@ -91,6 +91,33 @@ class QQHandler : public Handler {
         // return makeJson(404, {{"error", "Not Found"}});
         return default_handler->handle(req);
     }
+    HTTPResponse handleInviteGroup(const json &data, int user_id) {
+        if (user_id == -1) return makeJson(403, {{"error", "Not Logged In"}});
+        if (data.find("group_id") == data.end() || data.find("friend_id") == data.end()) {
+            return makeJson(400, {{"error", "Bad Request"}});
+        }
+        auto group_id = data["group_id"].get<int>();
+        auto friend_id = data["friend_id"].get<int>();  // 申请加入的用户
+        auto res = selectGroupById(group_id);
+        if (!res->next()) {
+            return makeJson(404, {{"error", "Group Not Found"}});
+        }
+        res->close();
+        res = selectGroupMember(group_id, user_id);
+        if (!res->next() ) {
+            return makeJson(403, {{"error", "Permission Denied"}});
+        }
+        res->close();  // 这个地方是邀请添加了
+        res = selectGroupMember(group_id, friend_id);
+        if (res->next()) {
+            return makeJson(200, {{"error", "User Already In Group"}});
+        }
+        res->close();
+        if (!insertGroupMember(group_id, friend_id, "invited")) {
+            return makeJson(500, {{"error", "Internal Server Error"}});
+        }
+        return makeJson(200, {{"message", "Invite Group Success"}});
+    }
     HTTPResponse handleBindWeChat(const json &data, int user_id) {
         if (user_id == -1) return makeJson(403, {{"error", "Not Logged In"}});
         if (data.find("wechat_id") == data.end()) {
@@ -147,7 +174,7 @@ class QQHandler : public Handler {
             return makeJson(404, {{"error", "Group Not Found"}});
         }
         res->close();
-        if (!insertGroupMember(group_id, user_id, "member")) {
+        if (!updateGroupMember(group_id, user_id, "member")) {
             return makeJson(500, {{"error", "Internal Server Error"}});
         }
         return makeJson(200, {{"message", "Accept Group Success"}});

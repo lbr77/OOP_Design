@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
     TCPServer server(port, &handlers);
     handlers.add_handle("/qq", new QQHandler());
     handlers.add_handle("/wb", new WeiboHandler());
-    handlers.add_handle("/wx", new WeChatHandler());
+    handlers.add_handle("/wx", new WXHandler());
     handlers.default_handle(new FileHandler());
     server.start();
     return 0;

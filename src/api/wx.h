@@ -1,5 +1,5 @@
-#ifndef _API_WX_H
-#define _API_WX_H
+#ifndef _API_H
+#define _API_H
 #pragma once
 #include "../db/interact.h"
 #include "../http/file.h"
@@ -19,15 +19,12 @@ class WXHandler : public Handler {
         post_handler["verifyFriend"] = &WXHandler::handleVerifyFriend;  // 验证好友1
         post_handler["deleteFriend"] = &WXHandler::handleDeleteFriend;  // 删除好友1
         post_handler["createGroup"] = &WXHandler::handleCreateGroup;    // 创建群(群管理员)
-        post_handler["addGroup"] = &WXHandler::handleAddGroup;          // 添加群(用户)
         post_handler["getGroup"] = &WXHandler::handleGetGroup;          // 获取群成员(用户)
-        post_handler["verifyGroup"] = &WXHandler::handleVerifyGroup;    // 验证群(群管理员)
-        post_handler["modifyPermission"] = &WXHandler::handleModifyPermission;  // 修改权限(群主)
-        post_handler["deleteGroup"] = &WXHandler::handleDeleteGroup;  // 删除群(群管理员)
+        post_handler["deleteGroup"] = &WXHandler::handleDeleteGroup;  // 删除群(群主)
         post_handler["kickGroupmember"] =
             &WXHandler::handleKickGroupMember;  // 踢出群成员(群管理员)
-        post_handler["addGroupmember"] = &WXHandler::handleAddGroup;  // 邀请加入群(用户)
-        post_handler["acceptGroup"] = &WXHandler::handleAcceptGroup;  // 接受邀请加入群(用户)
+        post_handler["addGroupmember"] = &WXHandler::handleInviteGroup;  // 邀请加入群(用户)
+        post_handler["acceptGroup"] = &WXHandler::handleAcceptGroup;  // 同意加入群(用户)
         post_handler["exitGroup"] = &WXHandler::handleExitGroup;      // 退出群(用户)
         post_handler["searchFriend"] = &WXHandler::handleSearchFriend;
         post_handler["searchGroup"] = &WXHandler::handleSearchGroup;
@@ -55,7 +52,7 @@ class WXHandler : public Handler {
         }
         LOG_DEBUG("User ID:", user_id);
         try {
-            if (req.path == "/qq/api") {
+            if (req.path == "/WX/api") {
                 if (req.method == "POST") {
                     if (req.data.find("action") == req.data.end()) {
                         return makeJson(400, {{"error", "Bad Request"}});
@@ -91,6 +88,33 @@ class WXHandler : public Handler {
         // return makeJson(404, {{"error", "Not Found"}});
         return default_handler->handle(req);
     }
+    HTTPResponse handleInviteGroup(const json &data, int user_id) {
+        if (user_id == -1) return makeJson(403, {{"error", "Not Logged In"}});
+        if (data.find("group_id") == data.end() || data.find("friend_id") == data.end()) {
+            return makeJson(400, {{"error", "Bad Request"}});
+        }
+        auto group_id = data["group_id"].get<int>();
+        auto friend_id = data["friend_id"].get<int>();  // 申请加入的用户
+        auto res = selectGroupById(group_id);
+        if (!res->next()) {
+            return makeJson(404, {{"error", "Group Not Found"}});
+        }
+        res->close();
+        res = selectGroupMember(group_id, user_id);
+        if (!res->next() ) {
+            return makeJson(403, {{"error", "Permission Denied"}});
+        }
+        res->close();  // 这个地方是邀请添加了
+        res = selectGroupMember(group_id, friend_id);
+        if (res->next()) {
+            return makeJson(200, {{"error", "User Already In Group"}});
+        }
+        res->close();
+        if (!insertGroupMember(group_id, friend_id, "invited")) {
+            return makeJson(500, {{"error", "Internal Server Error"}});
+        }
+        return makeJson(200, {{"message", "Invite Group Success"}});
+    }
     HTTPResponse handleBindWeChat(const json &data, int user_id) {
         if (user_id == -1) return makeJson(403, {{"error", "Not Logged In"}});
         if (data.find("wechat_id") == data.end()) {
@@ -110,7 +134,7 @@ class WXHandler : public Handler {
         auto nickname = data["username"].get<string>();
         auto location = data["location"].get<string>();
         auto birthdate = data["birthdate"].get<string>();
-        auto res = selectUserById(user_id, "QQ");
+        auto res = selectUserById(user_id, "WeChat");
         if (!res->next()) {
             return makeJson(404, {{"error", "User Not Found"}});
         }
@@ -147,7 +171,7 @@ class WXHandler : public Handler {
             return makeJson(404, {{"error", "Group Not Found"}});
         }
         res->close();
-        if (!insertGroupMember(group_id, user_id, "member")) {
+        if (!updateGroupMember(group_id, user_id, "member")) {
             return makeJson(500, {{"error", "Internal Server Error"}});
         }
         return makeJson(200, {{"message", "Accept Group Success"}});
@@ -189,35 +213,6 @@ class WXHandler : public Handler {
         }
         res->close();
         return makeJson(200, messages);
-    }
-    HTTPResponse handleModifyPermission(const json &data, int user_id) {
-        if (user_id == -1) return makeJson(403, {{"error", "Not Logged In"}});
-        if (data.find("group_id") == data.end() || data.find("user_id") == data.end() ||
-            data.find("role") == data.end()) {
-            return makeJson(400, {{"error", "Bad Request"}});
-        }
-        auto group_id = data["group_id"].get<int>();
-        auto app_user_id = data["user_id"].get<int>();
-        auto role = data["role"].get<string>();
-        auto res = selectGroupById(group_id);
-        if (!res->next()) {
-            return makeJson(404, {{"error", "Group Not Found"}});
-        }
-        res->close();
-        res = selectGroupMember(group_id, user_id);
-        if (!res->next() || res->getString("role") != "owner") {
-            return makeJson(403, {{"error", "Permission Denied"}});
-        }
-        res->close();
-        res = selectGroupMember(group_id, app_user_id);
-        if (!res->next()) {
-            return makeJson(404, {{"error", "User Not Found"}});
-        }
-        res->close();
-        if (!updateGroupMember(group_id, app_user_id, role)) {
-            return makeJson(500, {{"error", "Internal Server Error"}});
-        }
-        return makeJson(200, {{"message", "Modify Permission Success"}});
     }
     HTTPResponse handleGetHistoryMessage(const json &data, int user_id) {
         if (user_id == -1) return makeJson(403, {{"error", "Not Logged In"}});
@@ -267,7 +262,7 @@ class WXHandler : public Handler {
         auto user = json::object();
         auto friends = json::array();
         auto groups = json::array();
-        auto res = selectUserById(user_id, "QQ");
+        auto res = selectUserById(user_id, "WeChat");
         if (res->next()) {
             user["id"] = res->getInt("id");
             user["username"] = res->getString("nickname");
@@ -277,7 +272,7 @@ class WXHandler : public Handler {
             user["bind_id"] = res->getString("bind_id");
         }
         res->close();
-        auto res2 = selectFriends(user_id, "QQ");
+        auto res2 = selectFriends(user_id, "WeChat");
         while (res2->next()) {
             json friend_;
             friend_["id"] = res2->getInt("id");
@@ -383,7 +378,7 @@ class WXHandler : public Handler {
         auto username = data["username"].get<string>();
         auto password = data["password"].get<string>();
         auto db = SQL::getInstance();
-        if (insertUser(username, password, "QQ")) {
+        if (insertUser(username, password, "WeChat")) {
             return makeJson(200, {{"message", "Register Success"}});
         } else {
             return makeJson(500, {{"error", "Internal Server Error"}});
@@ -396,7 +391,7 @@ class WXHandler : public Handler {
         }
         auto username = data["username"].get<string>();
         auto password = data["password"].get<string>();
-        auto res = selectUserByNamePassword(username, password, "QQ");
+        auto res = selectUserByNamePassword(username, password, "WeChat");
         if (res->next()) {
             auto user_id = res->getInt("id");
             auto session = UUID(4);
@@ -416,8 +411,8 @@ class WXHandler : public Handler {
             return makeJson(400, {{"error", "Bad Request"}});
         }
         auto friend_id = data["friend_id"].get<int>();
-        auto res = selectUserById(friend_id, "QQ");
-        if (!res->next()) {  // 在qq上有这个用户
+        auto res = selectUserById(friend_id, "WeChat");
+        if (!res->next()) {  // 在WX上有这个用户
             res->close();
             return makeJson(404, {{"error", "User Not Found"}});
         }
@@ -439,8 +434,8 @@ class WXHandler : public Handler {
             return makeJson(400, {{"error", "Bad Request"}});
         }
         auto friend_id = data["friend_id"].get<int>();
-        auto res = selectUserById(friend_id, "QQ");
-        if (!res->next()) {  // 在qq上有这个用户
+        auto res = selectUserById(friend_id, "WeChat");
+        if (!res->next()) {  // 在WX上有这个用户
             res->close();
             return makeJson(404, {{"error", "User Not Found"}});
         }
@@ -479,7 +474,7 @@ class WXHandler : public Handler {
             return makeJson(400, {{"error", "Bad Request"}});
         }
         auto group_name = data["group_name"].get<string>();
-        if (!createGroup(user_id, group_name, "QQ")) {
+        if (!createGroup(user_id, group_name, "WeChat")) {
             return makeJson(500, {{"error", "Internal Server Error"}});
         }
         auto g = selectGroupByCreator(user_id, group_name);
@@ -491,51 +486,6 @@ class WXHandler : public Handler {
         }
         g->close();
         return makeJson(500, {{"error", "Internal Server Error"}});
-    }
-    HTTPResponse handleAddGroup(const json &data, int user_id) {
-        if (user_id == -1) return makeJson(403, {{"error", "Not Logged In"}});
-        if (data.find("group_id") == data.end()) {
-            return makeJson(400, {{"error", "Bad Request"}});
-        }
-        auto group_id = data["group_id"].get<int>();
-        auto res = selectGroupById(group_id);
-        if (!res->next()) {
-            return makeJson(404, {{"error", "Group Not Found"}});
-        }
-        res->close();
-        if (!insertGroupMember(group_id, user_id)) {  // default pending
-            return makeJson(500, {{"error", "Internal Server Error"}});
-        }
-        return makeJson(200, {{"message", "Add Group Success"}});
-    }
-    HTTPResponse handleVerifyGroup(const json &data, int user_id) {
-        if (user_id == -1) return makeJson(403, {{"error", "Not Logged In"}});
-        if (data.find("group_id") == data.end() || data.find("user_id") == data.end()) {
-            return makeJson(400, {{"error", "Bad Request"}});
-        }
-        auto group_id = data["group_id"].get<int>();
-        auto app_user_id = data["user_id"].get<int>();  // 申请加入的用户
-        auto res = selectGroupById(group_id);
-        if (!res->next()) {
-            return makeJson(404, {{"error", "Group Not Found"}});
-        }
-        res->close();
-        res = selectGroupMember(group_id, user_id);
-        if (!res->next() ||
-            (res->getString("role") != "owner" && res->getString("role") != "admin")) {
-            LOG_INFO(res->getString("role"));
-            return makeJson(403, {{"error", "Permission Denied"}});
-        }
-        res->close();
-        res = selectGroupMember(group_id, app_user_id);
-        if (!res->next()) {
-            return makeJson(404, {{"error", "User Not Found"}});
-        }
-        res->close();
-        if (!updateGroupMember(group_id, app_user_id, "member")) {
-            return makeJson(500, {{"error", "Internal Server Error"}});
-        }
-        return makeJson(200, {{"message", "Verify Group Success"}});
     }
     HTTPResponse handleDeleteGroup(const json &data, int user_id) {
         if (user_id == -1) return makeJson(403, {{"error", "Not Logged In"}});
@@ -572,7 +522,7 @@ class WXHandler : public Handler {
         res->close();
         res = selectGroupMember(group_id, user_id);
         if (!res->next() ||
-            (res->getString("role") != "owner" && res->getString("role") != "admin")) {
+            (res->getString("role") != "owner") {
             return makeJson(403, {{"error", "Permission Denied"}});
         }
         res->close();
@@ -592,7 +542,7 @@ class WXHandler : public Handler {
             return makeJson(400, {{"error", "Bad Request"}});
         }
         auto username = data["username"].get<string>();
-        auto res = searchUser(username, "QQ");
+        auto res = searchUser(username, "WeChat");
         auto result = json::array();
         while (res->next()) {
             result.push_back({{"id", res->getInt("id")}, {"username", res->getString("nickname")}});
@@ -606,7 +556,7 @@ class WXHandler : public Handler {
             return makeJson(400, {{"error", "Bad Request"}});
         }
         auto group_name = data["group_name"].get<string>();
-        auto res = searchGroup(group_name, "QQ");
+        auto res = searchGroup(group_name, "WeChat");
         auto result = json::array();
         while (res->next()) {
             result.push_back(
