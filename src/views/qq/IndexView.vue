@@ -182,6 +182,22 @@
               </div>
 
             </div>
+            <div v-else-if="message.type == 'invite'" class="max-w-xs p-3 rounded-lg">
+              <p class="text-lg">邀请你加入群{{ message.group_id }}</p>
+              <div class="flex space-x-4 mt-2">
+                <!-- Accept Button -->
+                <button @click="acceptInvite(message.group_id,idx)"
+                  class="px-4 py-2 bg-green-500 text-white rounded-md shadow hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2">
+                  Accept
+                </button>
+
+                <!-- Decline Button 无操作 -->
+                <button
+                  class="px-4 py-2 bg-red-500 text-white rounded-md shadow hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2">
+                  Decline
+                </button>
+              </div>
+            </div>
           </div>
         </div>
         <!-- 输入框区域 -->
@@ -568,7 +584,16 @@ const openAddActionModal = (action) => {
 const closeAddActionModal = () => {
   isAddActionModalOpen.value = false
 }
+const acceptInvite = (group_id,idx) => {
+  console.log('Accepting group invite')
+  qq("acceptGroup",{group_id: group_id}).then(res=>{
+    if(res.code == 200){
+      console.log(res.data)
+      notices.value.splice(idx,1)
+    }
+  })
 
+}
 const handleAddAction = () => {
   console.log(modalInput.value)
   if (modalInput.value.trim()) {
@@ -654,7 +679,14 @@ const getInfo = () => {
       res.data.message.map(markAsRead)
       notices.value = res.data.notice;
       res.data.notice.map((data)=>{
-        showNotification("新通知",`${data.username}请求${data.type == 'friend' ? '添加你为好友' : '加入群组'}`)
+
+        if(data.type == "friend") {
+          showNotification("新通知",`${data.username}请求添加你为好友`)
+        }else if(data.type == "admin_group"){
+          showNotification("新通知",`${data.username}请求加入群组`)
+        }else if(data.type == "invite") {
+          showNotification("新通知",`邀请你加入群组`)
+        }
       })
     }
   })
@@ -837,7 +869,9 @@ const inviteMember = () => {
     console.log('Inviting member to group:', curChat.value.name, 'Friend_id:', selectedFriend.value)
     qq("addGroupmember",{group_id: curChat.value.group_id,friend_id: selectedFriend.value}).then(res=>{
       if(res.code == 200){
-        showNotification('邀请新成员', `已成功邀请 ${selectedFriend.value} 加入群组：${curChat.value.name}`)
+        showNotification('邀请新成员', `已成功邀请 ${curChat.value.name} 加入群组：${curChat.value.name}`)
+      }else{
+        showNotification("您无权限邀请","请检查")
       }
     })
     closeInviteMemberModal()

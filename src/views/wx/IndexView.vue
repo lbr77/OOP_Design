@@ -649,6 +649,7 @@ const getInfo = () => {
       res.data.message.map(markAsRead)
       notices.value = res.data.notice;
       res.data.notice.map((data)=>{
+        console.log(data)
         showNotification("新通知",`${data.username}请求${data.type == 'friend' ? '添加你为好友' : '加入群组'}`)
       })
     }
